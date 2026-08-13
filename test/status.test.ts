@@ -30,6 +30,10 @@ test("turn completion becomes a named Codex confirmation wait", () => {
   const cursor: RolloutCursor = { offset: 0 };
   applyCodexRolloutLine(
     cursor,
+    JSON.stringify({ type: "session_meta", payload: { originator: "codex_work_desktop" } })
+  );
+  applyCodexRolloutLine(
+    cursor,
     JSON.stringify({ timestamp: "2026-08-13T12:00:00.000Z", type: "event_msg", payload: { type: "task_started" } })
   );
   applyCodexRolloutLine(
@@ -44,11 +48,13 @@ test("turn completion becomes a named Codex confirmation wait", () => {
       cwd: "/tmp/status-plugin",
       recency_at_ms: Date.now()
     },
-    cursor.lifecycle
+    cursor.lifecycle,
+    cursor.originator
   );
   assert.equal(session?.kind, "attention");
   assert.equal(session?.task, "Stream Deck 状態表示");
   assert.equal(session?.detail, "返信を確認してください");
+  assert.equal(session?.originator, "codex_work_desktop");
 });
 
 test("uses a renamed Claude session title ahead of its latest descriptive prompt", () => {

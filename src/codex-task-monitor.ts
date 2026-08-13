@@ -23,6 +23,7 @@ export interface RolloutLifecycle {
 
 export interface RolloutCursor {
   offset: number;
+  originator?: string;
   lifecycle?: RolloutLifecycle;
 }
 
@@ -58,6 +59,16 @@ export function codexThreadNamesFromSessionIndex(content: string): ReadonlyMap<s
 }
 
 export function applyCodexRolloutLine(cursor: RolloutCursor, line: string): void {
+  if (line.includes('"type":"session_meta"')) {
+    try {
+      const entry = JSON.parse(line) as { type?: unknown; payload?: { originator?: unknown } };
+      if (entry.type === "session_meta" && typeof entry.payload?.originator === "string") {
+        cursor.originator = oneLine(entry.payload.originator, "");
+      }
+    } catch {
+      // Ignore malformed metadata and continue scanning lifecycle events.
+    }
+  }
   if (!line.includes('"type":"event_msg"')) return;
   if (
     !line.includes('"type":"task_started"') &&
@@ -89,12 +100,14 @@ export function applyCodexRolloutLine(cursor: RolloutCursor, line: string): void
 
 export function codexSessionFromThread(
   thread: CodexThreadRow,
-  lifecycle: RolloutLifecycle | undefined
+  lifecycle: RolloutLifecycle | undefined,
+  originator?: string
 ): SessionStatus | undefined {
   if (!lifecycle) return undefined;
   return {
     sessionId: `codex:${thread.id}`,
     agent: "codex",
+    originator,
     kind: lifecycle.kind,
     project: path.basename(thread.cwd) || "Codex",
     task: oneLine(thread.display_name, path.basename(thread.cwd) || "Codexタスク"),
@@ -153,7 +166,7 @@ export class CodexTaskMonitor {
         const renamedThread = threadNames.has(thread.id)
           ? { ...thread, display_name: threadNames.get(thread.id) ?? thread.display_name }
           : thread;
-        const session = codexSessionFromThread(renamedThread, cursor.lifecycle);
+        const session = codexSessionFromThread(renamedThread, cursor.lifecycle, cursor.originator);
         if (session) sessions.push(session);
       }
       this.onSessions(sessions);

@@ -5,6 +5,7 @@ import { ClaudeTaskNameResolver } from "./claude-task-name";
 import { CodexTaskMonitor } from "./codex-task-monitor";
 import { StatePersistence } from "./persistence";
 import { HookServer } from "./server";
+import { SessionAppActivator } from "./session-app";
 import { StatusStore } from "./status";
 import { CombinedUsageProvider } from "./usage";
 import { CombinedUsageAction } from "./usage-action";
@@ -29,6 +30,9 @@ const claudeRemoteTitles = new ClaudeRemoteTitleResolver();
 const claudeTaskNames = new ClaudeTaskNameResolver();
 const usageProvider = new CombinedUsageProvider();
 const usageAction = new CombinedUsageAction(usageProvider);
+const sessionAppActivator = new SessionAppActivator({
+  onError: (error) => streamDeck.logger.error(`Could not activate session app: ${String(error)}`)
+});
 const saveState = () => {
   void persistence.save(store).catch((error: unknown) =>
     streamDeck.logger.error(`Could not save session state: ${String(error)}`)
@@ -43,17 +47,17 @@ try {
 }
 
 const statusActions = [
-  new UnifiedStatusAction(store, saveState),
-  new ClaudeStatusAction(store, saveState),
-  new CodexStatusAction(store, saveState),
-  new Session1Action(store, saveState),
-  new Session2Action(store, saveState),
-  new Session3Action(store, saveState),
-  new Session4Action(store, saveState),
-  new Session5Action(store, saveState),
-  new Session6Action(store, saveState),
-  new Session7Action(store, saveState),
-  new Session8Action(store, saveState)
+  new UnifiedStatusAction(store),
+  new ClaudeStatusAction(store),
+  new CodexStatusAction(store),
+  new Session1Action(store, sessionAppActivator),
+  new Session2Action(store, sessionAppActivator),
+  new Session3Action(store, sessionAppActivator),
+  new Session4Action(store, sessionAppActivator),
+  new Session5Action(store, sessionAppActivator),
+  new Session6Action(store, sessionAppActivator),
+  new Session7Action(store, sessionAppActivator),
+  new Session8Action(store, sessionAppActivator)
 ];
 const refreshClaudeTaskName = async (sessionId: string, transcriptPath?: string): Promise<void> => {
   try {

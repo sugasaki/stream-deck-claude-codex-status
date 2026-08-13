@@ -17,6 +17,7 @@ export type HookPayload = Record<string, unknown> & {
 export interface SessionStatus {
   sessionId: string;
   agent: AgentKind;
+  originator?: string;
   kind: StatusKind;
   project: string;
   task: string;
@@ -156,7 +157,8 @@ export class StatusStore {
         typeof session.task !== "string" ||
         typeof session.detail !== "string" ||
         typeof session.startedAt !== "number" ||
-        typeof session.updatedAt !== "number"
+        typeof session.updatedAt !== "number" ||
+        (session.originator !== undefined && typeof session.originator !== "string")
       ) {
         continue;
       }
