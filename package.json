@@ -1,9 +1,9 @@
 {
   "name": "claude-code-status-stream-deck",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "type": "module",
-  "description": "Display Claude Code and Codex task status and five-hour usage on Stream Deck Neo.",
+  "description": "Display Claude Code and Codex task status, Claude five-hour usage, and Codex weekly usage on Stream Deck Neo.",
   "scripts": {
     "build": "rollup -c",
     "check": "tsc --noEmit",

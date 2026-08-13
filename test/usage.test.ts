@@ -3,7 +3,7 @@ import test from "node:test";
 
 import {
   claudeFiveHourUsage,
-  codexFiveHourUsage,
+  codexWeeklyUsage,
   CombinedUsageProvider
 } from "../src/usage";
 import { combinedUsageSvg } from "../src/usage-render";
@@ -15,23 +15,23 @@ test("reads only Claude's five-hour usage window", () => {
   );
 });
 
-test("selects Codex's five-hour window and ignores its weekly window", () => {
+test("selects Codex's weekly window and ignores its five-hour window", () => {
   assert.deepEqual(
-    codexFiveHourUsage({
+    codexWeeklyUsage({
       rate_limit: {
         primary_window: { used_percent: 28, limit_window_seconds: 604_800, reset_at: 1_800_000_000 },
         secondary_window: { used_percent: 17, limit_window_seconds: 18_000, reset_at: 1_700_000_000 }
       }
     }),
-    { usedPercent: 17, resetAt: 1_700_000_000_000, state: "ok" }
+    { usedPercent: 28, resetAt: 1_800_000_000_000, state: "ok" }
   );
 });
 
-test("does not mislabel a Codex weekly-only limit as five-hour usage", () => {
+test("returns unavailable when Codex has no weekly limit", () => {
   assert.deepEqual(
-    codexFiveHourUsage({
+    codexWeeklyUsage({
       rate_limit: {
-        primary_window: { used_percent: 28, limit_window_seconds: 604_800, reset_at: 1_800_000_000 }
+        primary_window: { used_percent: 17, limit_window_seconds: 18_000, reset_at: 1_700_000_000 }
       }
     }),
     { usedPercent: null, resetAt: null, state: "unavailable" }
@@ -52,7 +52,7 @@ test("loads Claude and Codex usage together and caches the result", async () => 
     requestCodexUsage: async () => {
       codexRequests++;
       return {
-        rate_limit: { primary_window: { used_percent: 42, limit_window_seconds: 18_000 } }
+        rate_limit: { primary_window: { used_percent: 42, limit_window_seconds: 604_800 } }
       };
     }
   });
@@ -66,19 +66,18 @@ test("loads Claude and Codex usage together and caches the result", async () => 
   assert.equal(codexRequests, 1);
 });
 
-test("renders both providers in one five-hour key without weekly usage", () => {
+test("renders Claude five-hour and Codex weekly usage in one key", () => {
   const svg = combinedUsageSvg({
-    claude: { usedPercent: 23, resetAt: null, state: "ok" },
-    codex: { usedPercent: null, resetAt: null, state: "unavailable" },
+    claude: { usedPercent: 25, resetAt: null, state: "ok" },
+    codex: { usedPercent: 31, resetAt: null, state: "ok" },
     updatedAt: 1_000
   });
 
-  assert.match(svg, />5H</);
+  assert.match(svg, />USAGE</);
   assert.match(svg, />CLAUDE</);
-  assert.match(svg, />23%</);
+  assert.match(svg, />25% \/ 5h</);
   assert.match(svg, />CODEX</);
-  assert.match(svg, />—</);
-  assert.doesNotMatch(svg, /WEEK|weekly|週間/i);
+  assert.match(svg, />31% \/ w</);
   assert.match(svg, /#FF7548/);
   assert.match(svg, /#159DFF/);
 });

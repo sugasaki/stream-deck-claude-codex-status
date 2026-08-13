@@ -7,7 +7,7 @@ import { promisify } from "node:util";
 const execFileAsync = promisify(execFile);
 const CLAUDE_USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
 const CODEX_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
-const FIVE_HOURS_SECONDS = 5 * 60 * 60;
+const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60;
 
 export type UsageReadingState = "ok" | "unavailable" | "auth_required" | "error";
 
@@ -94,27 +94,27 @@ export function claudeFiveHourUsage(response: ClaudeUsageResponse): UsageReading
   };
 }
 
-function isFiveHourWindow(window: CodexUsageWindow): boolean {
+function isWeeklyWindow(window: CodexUsageWindow): boolean {
   if (typeof window.limit_window_seconds === "number") {
-    return Math.abs(window.limit_window_seconds - FIVE_HOURS_SECONDS) <= 60;
+    return Math.abs(window.limit_window_seconds - ONE_WEEK_SECONDS) <= 60;
   }
-  return typeof window.window_minutes === "number" && Math.abs(window.window_minutes - 300) <= 1;
+  return typeof window.window_minutes === "number" && Math.abs(window.window_minutes - 10_080) <= 1;
 }
 
-export function codexFiveHourUsage(response: CodexUsageResponse): UsageReading {
+export function codexWeeklyUsage(response: CodexUsageResponse): UsageReading {
   const rateLimits = [response.rate_limit, ...(response.additional_rate_limits ?? []).map((item) => item.rate_limit)];
   const windows = rateLimits.flatMap((rateLimit) =>
     rateLimit ? [rateLimit.primary_window, rateLimit.secondary_window] : []
   );
-  const fiveHourWindow = windows.find(
-    (window): window is CodexUsageWindow => Boolean(window && isFiveHourWindow(window))
+  const weeklyWindow = windows.find(
+    (window): window is CodexUsageWindow => Boolean(window && isWeeklyWindow(window))
   );
-  if (!fiveHourWindow) return emptyReading("unavailable");
-  const usedPercent = percent(fiveHourWindow.used_percent);
+  if (!weeklyWindow) return emptyReading("unavailable");
+  const usedPercent = percent(weeklyWindow.used_percent);
   if (usedPercent === null) return emptyReading("unavailable");
   return {
     usedPercent,
-    resetAt: resetAtFromSeconds(fiveHourWindow.reset_at),
+    resetAt: resetAtFromSeconds(weeklyWindow.reset_at),
     state: "ok"
   };
 }
@@ -250,7 +250,7 @@ export class CombinedUsageProvider {
     try {
       const credentials = await this.#readCodexCredentials();
       if (!credentials) return emptyReading("auth_required");
-      return codexFiveHourUsage(await this.#requestCodexUsage(credentials));
+      return codexWeeklyUsage(await this.#requestCodexUsage(credentials));
     } catch (error) {
       return emptyReading(error instanceof UsageAuthenticationError ? "auth_required" : "error");
     }
