@@ -1,0 +1,4 @@
+node_modules/
+dist/
+*.log
+com.atsu.claude-code-status.sdPlugin/bin/

@@ -1,0 +1,201 @@
+{
+  "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
+  "Name": "Claude & Codex Status",
+  "Version": "1.1.23.0",
+  "Author": "atsu",
+  "Actions": [
+    {
+      "Name": "Claude Code 概要",
+      "UUID": "com.atsu.claude-code-status.claude",
+      "Icon": "imgs/actions/status/icon",
+      "Tooltip": "Claude Codeの確認待ち、エラー、作業中の件数を表示します。タスク名は下の優先タスクへ表示します。",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/status/key",
+          "TitleAlignment": "middle",
+          "TitleColor": "#FFFFFF",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "Name": "Codex 概要",
+      "UUID": "com.atsu.claude-code-status.codex",
+      "Icon": "imgs/actions/status/icon",
+      "Tooltip": "Codexの確認待ち、エラー、作業中の件数を表示します。タスク名は下の優先タスクへ表示します。",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/status/key",
+          "TitleAlignment": "middle",
+          "TitleColor": "#FFFFFF",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "Name": "最新更新タスク",
+      "UUID": "com.atsu.claude-code-status.session-1",
+      "Icon": "imgs/actions/status/icon",
+      "Tooltip": "Claude CodeとCodexを合わせて、最終更新日時が最も新しい実タスクを表示します。",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/status/key",
+          "TitleAlignment": "middle",
+          "TitleColor": "#FFFFFF",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "Name": "1つ前の更新タスク",
+      "UUID": "com.atsu.claude-code-status.session-2",
+      "Icon": "imgs/actions/status/icon",
+      "Tooltip": "最終更新日時順で、最新タスクの1つ前を表示します。",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/status/key",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "Name": "2つ前の更新タスク",
+      "UUID": "com.atsu.claude-code-status.session-3",
+      "Icon": "imgs/actions/status/icon",
+      "Tooltip": "最終更新日時順で、最新タスクの2つ前を表示します。",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/status/key",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "Name": "3つ前の更新タスク",
+      "UUID": "com.atsu.claude-code-status.session-4",
+      "Icon": "imgs/actions/status/icon",
+      "Tooltip": "最終更新日時順で、最新タスクの3つ前を表示します。",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/status/key",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "Name": "AI Agent Status（旧）",
+      "UUID": "com.atsu.claude-code-status.status",
+      "Icon": "imgs/actions/status/icon",
+      "Tooltip": "旧バージョンとの互換用です。このアクションは削除できます。",
+      "VisibleInActionsList": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/status/key",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "Name": "4つ前の更新タスク",
+      "UUID": "com.atsu.claude-code-status.session-5",
+      "Icon": "imgs/actions/status/icon",
+      "Tooltip": "最終更新日時順で、最新タスクの4つ前を表示します。",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/status/key",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "Name": "5つ前の更新タスク",
+      "UUID": "com.atsu.claude-code-status.session-6",
+      "Icon": "imgs/actions/status/icon",
+      "Tooltip": "最終更新日時順で、最新タスクの5つ前を表示します。",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/status/key",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "Name": "7番目のタスク（旧）",
+      "UUID": "com.atsu.claude-code-status.session-7",
+      "Icon": "imgs/actions/status/icon",
+      "Tooltip": "旧バージョンとの互換用です。",
+      "VisibleInActionsList": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/status/key",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "Name": "8番目のタスク（旧）",
+      "UUID": "com.atsu.claude-code-status.session-8",
+      "Icon": "imgs/actions/status/icon",
+      "Tooltip": "旧バージョンとの互換用です。",
+      "VisibleInActionsList": false,
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/status/key",
+          "ShowTitle": false
+        }
+      ]
+    }
+  ],
+  "Category": "Claude & Codex Status",
+  "CategoryIcon": "imgs/plugin/category-icon",
+  "CodePath": "bin/plugin.js",
+  "Description": "Claude CodeとCodexの作業中、確認待ち、エラーを実際のタスク名とともにStream Deckへ表示します。",
+  "Icon": "imgs/plugin/marketplace",
+  "SDKVersion": 3,
+  "Software": {
+    "MinimumVersion": "7.1"
+  },
+  "OS": [
+    {
+      "Platform": "mac",
+      "MinimumVersion": "13"
+    }
+  ],
+  "Nodejs": {
+    "Version": "24"
+  },
+  "UUID": "com.atsu.claude-code-status"
+}

@@ -1,0 +1,36 @@
+{
+  "name": "claude-code-status-stream-deck",
+  "version": "1.1.23",
+  "private": true,
+  "type": "module",
+  "description": "Display Claude Code lifecycle status on Stream Deck Neo.",
+  "scripts": {
+    "build": "rollup -c",
+    "check": "tsc --noEmit",
+    "test": "tsx --test test/*.test.ts",
+    "validate": "npm run check && npm test && npm run build && streamdeck validate com.atsu.claude-code-status.sdPlugin",
+    "pack": "npm run validate && streamdeck pack com.atsu.claude-code-status.sdPlugin --output dist --force",
+    "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.atsu.claude-code-status\"",
+    "hooks:install": "node scripts/install-hooks.mjs",
+    "hooks:uninstall": "node scripts/uninstall-hooks.mjs",
+    "codex-hooks:install": "node scripts/install-codex-hooks.mjs",
+    "codex-hooks:uninstall": "node scripts/uninstall-codex-hooks.mjs",
+    "demo": "node scripts/send-demo.mjs"
+  },
+  "dependencies": {
+    "@elgato/streamdeck": "^2.1.1"
+  },
+  "devDependencies": {
+    "@elgato/cli": "^1.8.0",
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-terser": "^1.0.0",
+    "@rollup/plugin-typescript": "^12.1.4",
+    "@tsconfig/node24": "^24.0.1",
+    "@types/node": "^24.10.1",
+    "rollup": "^4.46.2",
+    "tslib": "^2.8.1",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2"
+  }
+}
