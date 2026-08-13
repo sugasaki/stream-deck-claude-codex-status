@@ -6,6 +6,8 @@ import { CodexTaskMonitor } from "./codex-task-monitor";
 import { StatePersistence } from "./persistence";
 import { HookServer } from "./server";
 import { StatusStore } from "./status";
+import { CombinedUsageProvider } from "./usage";
+import { CombinedUsageAction } from "./usage-action";
 import {
   ClaudeStatusAction,
   CodexStatusAction,
@@ -25,6 +27,8 @@ const store = new StatusStore();
 const persistence = new StatePersistence();
 const claudeRemoteTitles = new ClaudeRemoteTitleResolver();
 const claudeTaskNames = new ClaudeTaskNameResolver();
+const usageProvider = new CombinedUsageProvider();
+const usageAction = new CombinedUsageAction(usageProvider);
 const saveState = () => {
   void persistence.save(store).catch((error: unknown) =>
     streamDeck.logger.error(`Could not save session state: ${String(error)}`)
@@ -95,6 +99,7 @@ const codexTaskMonitor = new CodexTaskMonitor(
 );
 
 for (const statusAction of statusActions) streamDeck.actions.registerAction(statusAction);
+streamDeck.actions.registerAction(usageAction);
 streamDeck.connect();
 codexTaskMonitor.start();
 for (const session of store.export()) {
@@ -123,3 +128,10 @@ const refreshTimer = setInterval(() => {
   );
 }, 200);
 refreshTimer.unref();
+
+const usageRefreshTimer = setInterval(() => {
+  void usageAction.refresh().catch((error: unknown) =>
+    streamDeck.logger.error(`Could not refresh usage: ${String(error)}`)
+  );
+}, 60_000);
+usageRefreshTimer.unref();

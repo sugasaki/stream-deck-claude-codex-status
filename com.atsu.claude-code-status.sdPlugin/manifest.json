@@ -1,7 +1,7 @@
 {
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "Name": "Claude & Codex Status",
-  "Version": "1.1.23.0",
+  "Version": "1.2.0.0",
   "Author": "atsu",
   "Actions": [
     {
@@ -32,6 +32,23 @@
       "States": [
         {
           "Image": "imgs/actions/status/key",
+          "TitleAlignment": "middle",
+          "TitleColor": "#FFFFFF",
+          "ShowTitle": false
+        }
+      ]
+    },
+    {
+      "Name": "Claude + Codex 5時間使用率",
+      "UUID": "com.atsu.claude-code-status.usage-5h",
+      "Icon": "imgs/actions/usage/icon",
+      "Tooltip": "ClaudeとCodexの5時間枠の使用率だけを1つのキーへ表示します。週間枠は表示しません。",
+      "Controllers": [
+        "Keypad"
+      ],
+      "States": [
+        {
+          "Image": "imgs/actions/usage/key",
           "TitleAlignment": "middle",
           "TitleColor": "#FFFFFF",
           "ShowTitle": false
@@ -182,7 +199,7 @@
   "Category": "Claude & Codex Status",
   "CategoryIcon": "imgs/plugin/category-icon",
   "CodePath": "bin/plugin.js",
-  "Description": "Claude CodeとCodexの作業中、確認待ち、エラーを実際のタスク名とともにStream Deckへ表示します。",
+  "Description": "Claude CodeとCodexの作業状態、確認待ち、5時間使用率をStream Deckへ表示します。",
   "Icon": "imgs/plugin/marketplace",
   "SDKVersion": 3,
   "Software": {
