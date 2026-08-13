@@ -185,7 +185,8 @@ export function renderStatus(snapshot: StatusSnapshot, now = Date.now()): string
   <text x="72" y="66" text-anchor="middle" fill="${TEXT_COLOR}" font-size="16" font-weight="700" font-family="Arial,sans-serif">${nameLine1}</text>
   <text x="72" y="87" text-anchor="middle" fill="${TEXT_COLOR}" font-size="16" font-weight="700" font-family="Arial,sans-serif">${nameLine2}</text>
   <text x="72" y="108" text-anchor="middle" fill="${TEXT_COLOR}" font-size="16" font-weight="700" font-family="Arial,sans-serif">${nameLine3}</text>
-  <text x="72" y="136" text-anchor="middle" fill="${TEXT_COLOR}" opacity="0.92" font-size="11.5" font-weight="700" font-family="Arial,sans-serif">${escapeXml(time)}</text>`;
+  <rect x="24" y="117" width="96" height="22" rx="11" fill="${BACKGROUND_COLOR}" opacity="0.86"/>
+  <text x="72" y="134" text-anchor="middle" fill="${TEXT_COLOR}" font-size="14" font-weight="700" font-family="Arial,sans-serif">${escapeXml(time)}</text>`;
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">
   <rect x="2" y="2" width="140" height="140" rx="20" fill="${BACKGROUND_COLOR}" stroke="${theme.border}" stroke-width="3.5"/>

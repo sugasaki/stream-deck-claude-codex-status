@@ -417,8 +417,9 @@ test("renders an encoded SVG without leaking markup from project names", () => {
   const svg = decodeURIComponent(image);
   assert.match(svg, /更新 1分前/);
   assert.match(svg, /font-size="16"/);
-  assert.match(svg, /font-size="11\.5"/);
-  assert.match(svg, /y="136"[^>]*>更新 1分前/);
+  assert.match(svg, /x="24" y="117" width="96" height="22"/);
+  assert.match(svg, /font-size="14"/);
+  assert.match(svg, /y="134"[^>]*>更新 1分前/);
   assert.match(svg, /data-indicator="working"/);
   assert.match(svg, /fill="#69E6A6"[^>]*>作業中/);
   assert.match(svg, /fill="#050608" stroke="#E36B3A"/);
