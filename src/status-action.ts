@@ -115,3 +115,28 @@ export class Session7Action extends SessionSlotAction {
 export class Session8Action extends SessionSlotAction {
   constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 7, activator); }
 }
+
+@action({ UUID: "com.atsu.claude-code-status.session-9" })
+export class Session9Action extends SessionSlotAction {
+  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 8, activator); }
+}
+
+@action({ UUID: "com.atsu.claude-code-status.session-10" })
+export class Session10Action extends SessionSlotAction {
+  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 9, activator); }
+}
+
+@action({ UUID: "com.atsu.claude-code-status.session-11" })
+export class Session11Action extends SessionSlotAction {
+  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 10, activator); }
+}
+
+@action({ UUID: "com.atsu.claude-code-status.session-12" })
+export class Session12Action extends SessionSlotAction {
+  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 11, activator); }
+}
+
+@action({ UUID: "com.atsu.claude-code-status.session-13" })
+export class Session13Action extends SessionSlotAction {
+  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 12, activator); }
+}

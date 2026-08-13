@@ -9,12 +9,12 @@ A macOS Stream Deck plugin that displays live Claude Code and Codex task session
 
 After you send an instruction and switch to another task, the plugin tells you when an agent has finished replying or needs permission. It shows `確認待ち` (Needs attention) together with the actual session name, lets you see multiple Claude Code and Codex tasks at a glance, and brings the originating app to the foreground when you press a task key.
 
-![Recommended Stream Deck Neo layout](assets/readme-preview.svg)
+![Recommended Stream Deck Neo page 1 layout](assets/readme-preview.svg)
 
 ## Features
 
 - Shows `作業中` (Working), `確認待ち` (Needs attention), and `エラー` (Error) for Claude Code and Codex
-- Combines both agents and displays up to five real tasks, sorted by most recent update
+- Combines both agents and displays up to 13 real tasks across two pages, sorted by most recent update
 - Uses renameable Claude and Codex chat titles as session names
 - Flashes the red attention marker for ten seconds after a task starts waiting
 - Animates a large working indicator at five frames per second
@@ -69,7 +69,9 @@ In Codex, open `/hooks` and trust the newly installed user hook. This lets permi
 
 ### 3. Arrange the keys
 
-In the Stream Deck app, add these actions from the `Claude & Codex Status` category:
+In the Stream Deck app, add these actions from the `Claude & Codex Status` category.
+
+Page 1 keeps the summaries, the five most recently updated tasks, and usage:
 
 | Position | Action shown in Stream Deck | Purpose |
 | --- | --- | --- |
@@ -82,7 +84,20 @@ In the Stream Deck app, add these actions from the `Claude & Codex Status` categ
 | Bottom 3 | `4つ前の更新タスク` | Fifth most recent task |
 | Bottom 4 | `Claude 5時間 + Codex 週間使用率` | Combined usage display |
 
-The legacy actions `AI Agent Status`, `7番目のタスク`, and `8番目のタスク` remain for compatibility but are hidden from the list of new actions. You can remove them if they are still assigned to keys.
+Page 2 continues the same update-time order with eight more tasks:
+
+| Position | Action shown in Stream Deck | Purpose |
+| --- | --- | --- |
+| Top 1 | `5つ前の更新タスク` | Sixth most recent task |
+| Top 2 | `6つ前の更新タスク` | Seventh most recent task |
+| Top 3 | `7つ前の更新タスク` | Eighth most recent task |
+| Top 4 | `8つ前の更新タスク` | Ninth most recent task |
+| Bottom 1 | `9つ前の更新タスク` | Tenth most recent task |
+| Bottom 2 | `10件前の更新タスク` | Eleventh most recent task |
+| Bottom 3 | `11件前の更新タスク` | Twelfth most recent task |
+| Bottom 4 | `12件前の更新タスク` | Thirteenth most recent task |
+
+The legacy `AI Agent Status` action remains for compatibility but is hidden from the list of new actions. You can remove it if it is still assigned to a key.
 
 ## Status meanings
 
@@ -97,7 +112,7 @@ The summary keys count Claude and Codex separately. Errors are not included in t
 
 ## Task ordering and removal
 
-Claude Code and Codex tasks are combined and sorted by the agents' most recent update time. Status does not affect the order, so a newer working task appears before an older task that needs attention.
+Claude Code and Codex tasks are combined and sorted by the agents' most recent update time. Status does not affect the order, so a newer working task appears before an older task that needs attention. The first five tasks appear on page 1, and the next eight continue on page 2.
 
 Pressing a task key does not remove it. A task leaves the display when its main Claude or Codex task ends, when a Codex task is archived, or when it has not been updated for more than eight hours. After a response completes, the plugin keeps the task in `確認待ち` so you can notice it and return to it.
 

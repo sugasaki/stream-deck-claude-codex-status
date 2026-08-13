@@ -5,7 +5,7 @@ import path from "node:path";
 import { createInterface } from "node:readline";
 import { DatabaseSync } from "node:sqlite";
 
-import type { SessionStatus } from "./status";
+import { DISPLAY_SESSION_COUNT, type SessionStatus } from "./status";
 
 interface CodexThreadRow {
   id: string;
@@ -138,7 +138,7 @@ export class CodexTaskMonitor {
     this.#sessionIndexPath = options.sessionIndexPath ?? path.join(this.#codexHome, "session_index.jsonl");
     this.#intervalMs = options.intervalMs ?? 1_000;
     this.#maxAgeMs = options.maxAgeMs ?? 8 * 60 * 60 * 1_000;
-    this.#limit = options.limit ?? 8;
+    this.#limit = options.limit ?? DISPLAY_SESSION_COUNT;
   }
 
   start(): void {

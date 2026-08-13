@@ -3,6 +3,8 @@ import path from "node:path";
 export type StatusKind = "offline" | "ready" | "working" | "attention" | "done" | "error";
 export type AgentKind = "claude" | "codex";
 
+export const DISPLAY_SESSION_COUNT = 13;
+
 export type HookPayload = Record<string, unknown> & {
   hook_event_name?: string;
   session_id?: string;

@@ -20,6 +20,11 @@ import {
   Session6Action,
   Session7Action,
   Session8Action,
+  Session9Action,
+  Session10Action,
+  Session11Action,
+  Session12Action,
+  Session13Action,
   UnifiedStatusAction
 } from "./status-action";
 
@@ -60,7 +65,12 @@ const statusActions = [
   new Session5Action(store, sessionAppActivator),
   new Session6Action(store, sessionAppActivator),
   new Session7Action(store, sessionAppActivator),
-  new Session8Action(store, sessionAppActivator)
+  new Session8Action(store, sessionAppActivator),
+  new Session9Action(store, sessionAppActivator),
+  new Session10Action(store, sessionAppActivator),
+  new Session11Action(store, sessionAppActivator),
+  new Session12Action(store, sessionAppActivator),
+  new Session13Action(store, sessionAppActivator)
 ];
 const refreshClaudeTaskName = async (sessionId: string, transcriptPath?: string): Promise<void> => {
   try {

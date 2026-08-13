@@ -18,7 +18,7 @@ import {
   type RolloutCursor
 } from "../src/codex-task-monitor";
 import { HookServer } from "../src/server";
-import { StatusStore } from "../src/status";
+import { DISPLAY_SESSION_COUNT, StatusStore } from "../src/status";
 
 test("reports that monitoring is active before the first hook arrives", () => {
   const store = new StatusStore();
@@ -303,6 +303,28 @@ test("a newer working task is shown before an older confirmation wait", () => {
   assert.equal(store.sessionSnapshot(0, 4_000).kind, "working");
   assert.equal(store.sessionSnapshot(1, 4_000).task, "古い確認待ち");
   assert.equal(store.sessionSnapshot(1, 4_000).kind, "attention");
+});
+
+test("fills two Stream Deck pages with thirteen tasks in update order", () => {
+  const store = new StatusStore();
+  for (let index = 1; index <= DISPLAY_SESSION_COUNT; index++) {
+    store.applyHook(
+      {
+        hook_event_name: "UserPromptSubmit",
+        session_id: `task-${index}`,
+        prompt: `更新タスク ${index}`
+      },
+      index * 1_000,
+      index % 2 === 0 ? "claude" : "codex"
+    );
+  }
+
+  assert.equal(DISPLAY_SESSION_COUNT, 13);
+  assert.equal(store.sessionSnapshot(0, 14_000).task, "更新タスク 13");
+  assert.equal(store.sessionSnapshot(4, 14_000).task, "更新タスク 9");
+  assert.equal(store.sessionSnapshot(5, 14_000).task, "更新タスク 8");
+  assert.equal(store.sessionSnapshot(12, 14_000).task, "更新タスク 1");
+  assert.equal(store.sessionSnapshot(13, 14_000).sessionId, "empty:13");
 });
 
 test("agent summaries show counts without repeating task names", () => {

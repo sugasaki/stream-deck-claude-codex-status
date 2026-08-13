@@ -1,7 +1,7 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 
-import { type AgentKind, StatusStore, type HookPayload } from "./status";
+import { DISPLAY_SESSION_COUNT, type AgentKind, StatusStore, type HookPayload } from "./status";
 
 const MAX_BODY_BYTES = 256 * 1024;
 
@@ -49,7 +49,10 @@ export class HookServer {
 
   #handle(request: IncomingMessage, response: ServerResponse): void {
     if (request.method === "GET" && request.url === "/health") {
-      const sessions = Array.from({ length: 8 }, (_, slot) => this.store.sessionSnapshot(slot)).filter(
+      const sessions = Array.from(
+        { length: DISPLAY_SESSION_COUNT },
+        (_, slot) => this.store.sessionSnapshot(slot)
+      ).filter(
         (session) => !session.sessionId.startsWith("empty:")
       );
       writeJson(response, 200, { ok: true, status: this.store.snapshot(), sessions });
