@@ -75,9 +75,13 @@ test("renders Claude five-hour and Codex weekly usage in one key", () => {
 
   assert.match(svg, />USAGE</);
   assert.match(svg, />CLAUDE</);
-  assert.match(svg, />25% \/ 5h</);
+  assert.match(svg, /font-size="22">25<\/tspan>/);
+  assert.match(svg, /font-size="15">% \/ 5h<\/tspan>/);
   assert.match(svg, />CODEX</);
-  assert.match(svg, />31% \/ w</);
+  assert.match(svg, /font-size="22">31<\/tspan>/);
+  assert.match(svg, /font-size="15">% \/ w<\/tspan>/);
+  assert.match(svg, /font-size="9\.5"[^>]*>CLAUDE</);
+  assert.match(svg, /font-size="9\.5"[^>]*>CODEX</);
   assert.match(svg, /#FF7548/);
   assert.match(svg, /#159DFF/);
 });
