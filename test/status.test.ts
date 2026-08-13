@@ -73,12 +73,12 @@ test("uses a renamed Claude session title ahead of its latest descriptive prompt
   );
   applyClaudeTranscriptLine(
     cursor,
-    JSON.stringify({ type: "custom-title", customTitle: "App | sample-project 再設計" })
+    JSON.stringify({ type: "custom-title", customTitle: "App | Sample Project 再設計" })
   );
 
   assert.equal(cursor.firstPrompt, "以下のプロジェクトに着手 https://github.com/example-org/sample-project");
   assert.equal(cursor.latestPrompt, "再設計の対話を始めたい。類似サービス調査はしない");
-  assert.equal(claudeTaskName(cursor), "App | sample-project 再設計");
+  assert.equal(claudeTaskName(cursor), "App | Sample Project 再設計");
 });
 
 test("uses Claude's generated title before prompt-based fallbacks", () => {
@@ -530,9 +530,9 @@ test("keeps the current Claude chat title readable without truncation", () => {
     elapsedMs: 3_000
   }, 4_000));
 
-  assert.match(image, />Sample Project<\/text>/);
-  assert.match(image, />プロジェクト<\/text>/);
-  assert.doesNotMatch(image, /プロジェ…/);
+  assert.match(image, />Sample<\/text>/);
+  assert.match(image, />Project<\/text>/);
+  assert.doesNotMatch(image, /Projec…/);
 });
 
 test("accepts hook JSON over its loopback HTTP endpoint", async () => {
