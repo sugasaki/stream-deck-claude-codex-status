@@ -1,44 +1,46 @@
 # Claude & Codex Status for Stream Deck Neo
 
+English | [日本語](README.ja.md)
+
 [![Version](https://img.shields.io/github/v/tag/sugasaki/stream-deck-claude-codex-status?label=version)](https://github.com/sugasaki/stream-deck-claude-codex-status/tags)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-Claude CodeとCodexのタスクセッションをStream Deckへ表示するmacOS向けプラグインです。
+A macOS Stream Deck plugin that displays live Claude Code and Codex task sessions.
 
-エージェントへ指示を送ったあと別の作業へ移っても、返信完了や許可要求を `確認待ち` と実際のセッション名で知らせます。Claude CodeとCodexの複数タスクを一つの画面で見渡し、タスクキーを押して元のアプリへ戻れます。
+After you send an instruction and switch to another task, the plugin tells you when an agent has finished replying or needs permission. It shows `確認待ち` (Needs attention) together with the actual session name, lets you see multiple Claude Code and Codex tasks at a glance, and brings the originating app to the foreground when you press a task key.
 
-![Stream Deck Neoの推奨配置](assets/readme-preview.svg)
+![Recommended Stream Deck Neo layout](assets/readme-preview.svg)
 
-## 主な機能
+## Features
 
-- Claude CodeとCodexの `作業中`、`確認待ち`、`エラー` を表示
-- 両エージェントの実タスクを最終更新日時の新しい順に最大5件表示
-- 変更可能なClaude/Codexのチャット名をセッション名として使用
-- 確認待ちへ変わった直後の10秒間は赤いマーカーを点滅
-- 作業中は大きな回転インジケーターを毎秒5フレームで表示
-- タスクキーから起動元アプリを前面表示
-- Claudeの5時間利用率とCodexの週間利用率を1キーに統合
-- Stream Deck再起動後も最近のタスク状態を復元
+- Shows `作業中` (Working), `確認待ち` (Needs attention), and `エラー` (Error) for Claude Code and Codex
+- Combines both agents and displays up to five real tasks, sorted by most recent update
+- Uses renameable Claude and Codex chat titles as session names
+- Flashes the red attention marker for ten seconds after a task starts waiting
+- Animates a large working indicator at five frames per second
+- Brings the app that started a task to the foreground when its key is pressed
+- Combines Claude five-hour usage and Codex weekly usage on one key
+- Restores recent task state after Stream Deck restarts
 
-## 必要環境
+## Requirements
 
-| 項目 | 要件 |
+| Item | Requirement |
 | --- | --- |
-| OS | macOS 13以降 |
-| Stream Deck | Stream Deck 7.1以降 |
-| デバイス | Stream Deck Neo向けに最適化 |
-| 開発・フック導入 | Node.js 24以降 |
-| エージェント | Claude Code、Codexのいずれか、または両方 |
+| OS | macOS 13 or later |
+| Stream Deck | Stream Deck 7.1 or later |
+| Device | Optimized for Stream Deck Neo |
+| Development and hook setup | Node.js 24 or later |
+| Agent | Claude Code, Codex, or both |
 
-表示は144×144ピクセルのLCDキー向けです。Neo以外のStream DeckでもKeypadアクションとして配置できますが、このリポジトリではNeoの2×4配置を基準にしています。
+The key images target 144×144-pixel LCD keys. You can add the Keypad actions to other Stream Deck models, but this repository is designed around the Neo 2×4 layout.
 
-## インストール
+## Installation
 
-### 1. プラグインをインストール
+### 1. Install the plugin
 
-配布済みの `.streamDeckPlugin` を使う場合は、ファイルをダブルクリックしてStream Deckへインストールします。
+If you have a packaged `.streamDeckPlugin` file, double-click it to install the plugin in Stream Deck.
 
-ソースから作る場合:
+To build from source:
 
 ```sh
 git clone https://github.com/sugasaki/stream-deck-claude-codex-status.git
@@ -48,180 +50,180 @@ npm run pack
 open dist/com.atsu.claude-code-status.streamDeckPlugin
 ```
 
-### 2. エージェントのフックを追加
+### 2. Install the agent hooks
 
-リポジトリのフォルダで実行します。
+Run the following commands from the repository directory:
 
 ```sh
 npm run hooks:install
 npm run codex-hooks:install
 ```
 
-- Claude Code用設定は `~/.claude/settings.json` へ追加されます。
-- Codex用設定は `~/.codex/hooks.json` へ追加されます。
-- 既存設定は残し、このプラグイン専用の目印付きエントリだけを追加・更新します。
-- 既存ファイルを変更する場合は、同じフォルダへバックアップを作成します。
-- 書き込み直前に別プロセスが設定を変更した場合は、上書きせず停止します。
+- The Claude Code hook is added to `~/.claude/settings.json`.
+- The Codex hook is added to `~/.codex/hooks.json`.
+- Existing settings are preserved. The installers only add or update entries marked as belonging to this plugin.
+- A backup is created next to an existing settings file before it is changed.
+- If another process changes the file between reading and writing, the installer stops instead of overwriting the newer file.
 
-Codexでは `/hooks` を開き、追加されたユーザーフックを信頼してください。これにより実行許可待ちもすぐに反映されます。
+In Codex, open `/hooks` and trust the newly installed user hook. This lets permission requests appear immediately.
 
-### 3. キーを配置
+### 3. Arrange the keys
 
-Stream Deckアプリの `Claude & Codex Status` カテゴリーから、次のように配置します。
+In the Stream Deck app, add these actions from the `Claude & Codex Status` category:
 
-| 位置 | アクション | 内容 |
+| Position | Action shown in Stream Deck | Purpose |
 | --- | --- | --- |
-| 上段1 | `Claude Code 概要` | Claudeの確認待ち・作業中件数 |
-| 上段2 | `Codex 概要` | Codexの確認待ち・作業中件数 |
-| 上段3 | `最新更新タスク` | 最新タスク |
-| 上段4 | `1つ前の更新タスク` | 2番目に新しいタスク |
-| 下段1 | `2つ前の更新タスク` | 3番目に新しいタスク |
-| 下段2 | `3つ前の更新タスク` | 4番目に新しいタスク |
-| 下段3 | `4つ前の更新タスク` | 5番目に新しいタスク |
-| 下段4 | `Claude 5時間 + Codex 週間使用率` | 利用率の統合表示 |
+| Top 1 | `Claude Code 概要` | Claude attention and working counts |
+| Top 2 | `Codex 概要` | Codex attention and working counts |
+| Top 3 | `最新更新タスク` | Most recently updated task |
+| Top 4 | `1つ前の更新タスク` | Second most recent task |
+| Bottom 1 | `2つ前の更新タスク` | Third most recent task |
+| Bottom 2 | `3つ前の更新タスク` | Fourth most recent task |
+| Bottom 3 | `4つ前の更新タスク` | Fifth most recent task |
+| Bottom 4 | `Claude 5時間 + Codex 週間使用率` | Combined usage display |
 
-旧バージョンの `AI Agent Status`、`7番目のタスク`、`8番目のタスク` は互換用に残していますが、新規アクション一覧には表示されません。配置済みの場合は削除できます。
+The legacy actions `AI Agent Status`, `7番目のタスク`, and `8番目のタスク` remain for compatibility but are hidden from the list of new actions. You can remove them if they are still assigned to keys.
 
-## 状態の意味
+## Status meanings
 
-| 表示 | 意味 |
+| Display | Meaning |
 | --- | --- |
-| 作業中 | エージェントが応答を生成中、またはツールを実行中 |
-| 確認待ち | 返信が完了したか、回答・選択・実行許可が必要 |
-| エラー | ツールまたは応答が失敗・中断 |
-| 空き / 表示なし | その位置へ表示する実タスクがない |
+| `作業中` (Working) | The agent is generating a response or running a tool |
+| `確認待ち` (Needs attention) | A response is complete, or the agent needs an answer, choice, or execution permission |
+| `エラー` (Error) | A tool or response failed or was interrupted |
+| `空き` / `表示なし` (Empty) | There is no real task for that key position |
 
-概要キーはClaudeとCodexを別々に集計します。エラー件数は概要へ含めず、該当するタスクキーだけに表示します。
+The summary keys count Claude and Codex separately. Errors are not included in the summary counts; they appear only on their task keys.
 
-## タスクの並び方と終了判定
+## Task ordering and removal
 
-Claude CodeとCodexを合わせ、エージェント側の最終更新日時が新しい順に並べます。確認待ちを作業中より優先するなど、状態による並べ替えはしません。
+Claude Code and Codex tasks are combined and sorted by the agents' most recent update time. Status does not affect the order, so a newer working task appears before an older task that needs attention.
 
-タスクキーを押しても一覧から消えません。Claude/Codexのメインタスクが終了したとき、Codexのタスクをアーカイブしたとき、または8時間以上更新がないときに表示対象から外れます。返信完了後は、ユーザーが実際に戻って確認できるよう `確認待ち` を維持します。
+Pressing a task key does not remove it. A task leaves the display when its main Claude or Codex task ends, when a Codex task is archived, or when it has not been updated for more than eight hours. After a response completes, the plugin keeps the task in `確認待ち` so you can notice it and return to it.
 
-## セッション名
+## Session names
 
 ### Codex
 
-`~/.codex/session_index.jsonl` にある変更後のタスク名を優先し、名称がなければタスク本体のローカル記録へ戻ります。名称変更だけでは表示順を変えません。
+The plugin prefers the renamed task title in `~/.codex/session_index.jsonl`. If no renamed title is available, it falls back to the task's local record. Renaming a task does not change its sort position.
 
 ### Claude Code
 
-次の順で利用できる名前を探します。
+The plugin looks for a usable name in this order:
 
-1. Remote Controlで変更したチャット名
-2. ローカル記録にある変更後のセッション名
-3. Claudeが生成した名前またはエージェント名
-4. 内容を識別できる直近の依頼
-5. 最初の実際の依頼
+1. A chat title renamed through Remote Control
+2. A renamed session title in local records
+3. A Claude-generated title or agent name
+4. The latest request that can identify the task
+5. The first meaningful request
 
-`OK`、`続けて`、ローカルコマンド、画像通知など、セッションを見分けにくい文字列は名前候補から除外します。Remote Controlの名称は約15秒以内に反映します。
+Generic text such as `OK` or `Continue`, local commands, and image notifications are excluded from title candidates. Remote Control title changes normally appear within about 15 seconds.
 
-## タスクキーを押したとき
+## What happens when you press a task key
 
-タスクキーは、そのセッションを開いている可能性が最も高いアプリを前面にします。
+A task key brings the app most likely to contain that session to the foreground.
 
-- Claude Code: セッションPIDの親プロセスをたどり、Ghostty、Terminalなど実際の起動元 `.app` を検出
-- Codex: セッションに記録された起動元を使用し、対応していればZed、Visual Studio Code、Chromeなどを起動
-- Codexデスクトップ: `codex://threads/<task-id>` でChatGPTの該当タスクを直接開く
-- 判定・起動に失敗した場合: ClaudeはClaudeアプリ、CodexはChatGPTアプリへフォールバック
+- Claude Code: walks up the session PID's parent processes to identify the actual `.app`, such as Ghostty or Terminal
+- Codex: uses the recorded origin application and can open supported apps such as Zed, Visual Studio Code, or Chrome
+- Codex desktop: opens the exact ChatGPT task through `codex://threads/<task-id>`
+- Fallback: opens the Claude app for Claude sessions or the ChatGPT app for Codex sessions
 
-概要キーは押しても状態を変更しません。利用率キーは押すと再描画します。
+Pressing a summary key does not change any state. Pressing the usage key redraws it immediately.
 
-## 利用率
+## Usage display
 
-| エージェント | 表示期間 | 主な取得元 | 通信頻度 |
+| Agent | Window | Primary source | Network interval |
 | --- | --- | --- | --- |
-| Claude | 5時間 | Anthropic OAuth利用量API | 最短5分 |
-| Codex | 週間 | ChatGPT/Codex利用量API | 1分ごと |
+| Claude | Five hours | Anthropic OAuth usage API | At least five minutes |
+| Codex | Weekly | ChatGPT/Codex usage API | Once per minute |
 
-Claudeの取得は[CodexBar](https://github.com/steipete/CodexBar)の方式を参考にしています。
+The Claude integration follows the approach used by [CodexBar](https://github.com/steipete/CodexBar).
 
-- インストール済みClaude Codeのバージョンを検出し、`claude-code/<version>` のUser-Agentを使用
-- Stream Deckの描画更新とAnthropic API通信を分離
-- HTTP 429を受けた場合は、`Retry-After` または最低5分のクールダウンを適用
-- 通信失敗時は直前の成功値を維持
-- 成功値がない場合は、Claudeデスクトップが保存した30分以内のローカル利用率へフォールバック
-- キーを押してもClaude APIの最短間隔とクールダウンは迂回しない
+- Detects the installed Claude Code version and sends a `claude-code/<version>` User-Agent
+- Separates Stream Deck redraws from Anthropic API requests
+- Honors `Retry-After`, with a minimum five-minute cooldown after HTTP 429
+- Keeps the last successful value when a request fails
+- If there is no successful value, falls back to Claude Desktop usage data written within the last 30 minutes
+- Does not bypass the minimum interval or cooldown when the key is pressed
 
-表示例はClaudeが `42% / 5h`、Codexが `38% / w` です。契約プランやAPIが該当期間を返さない場合は `—`、ログイン情報がない場合は `LOGIN`、利用できる値も予備データもない一時エラーは `ERR` と表示します。
+Typical values are shown as `42% / 5h` for Claude and `38% / w` for Codex. The key displays `—` when the plan or API does not provide that window, `LOGIN` when credentials are unavailable, and `ERR` only when a temporary error occurs and neither a successful nor fallback value exists.
 
-## 仕組み
+## How it works
 
-### 状態イベント
+### Status events
 
-- Claude Codeのライフサイクルフックは、ローカルHTTPサーバー `127.0.0.1:37654` へイベントを送信します。
-- Codexはローカルのタスク記録から開始・完了を監視し、ユーザーフックで許可要求を補完します。
-- 受信したイベントから、表示に必要なエージェント、状態、短縮したセッション名、時刻だけを保持します。
+- Claude Code lifecycle hooks send events to the local HTTP server at `127.0.0.1:37654`.
+- Codex start and completion states are read from local task records, while the user hook supplements permission requests.
+- The plugin keeps only the agent, state, shortened session name, and timestamps required for the display.
 
-### ローカル保存
+### Local storage
 
-最近の表示状態は次へ保存します。
+Recent display state is stored at:
 
 ```text
 ~/Library/Application Support/Claude-Codex-Status/session-state.json
 ```
 
-Stream Deck再起動後の表示復元に使用します。8時間以上更新のない状態は自動的に破棄します。
+This file restores the display after Stream Deck restarts. Entries that have not been updated for more than eight hours are discarded automatically.
 
-### 外部通信
+### External connections
 
-| 用途 | 接続先 |
+| Purpose | Destination |
 | --- | --- |
-| Claudeの5時間利用率 | `https://api.anthropic.com/api/oauth/usage` |
-| Claude Remote Controlのタイトル | Claude公式 `api.anthropic.com` |
-| Codexの週間利用率 | `https://chatgpt.com/backend-api/wham/usage` |
+| Claude five-hour usage | `https://api.anthropic.com/api/oauth/usage` |
+| Claude Remote Control titles | Claude's official `api.anthropic.com` service |
+| Codex weekly usage | `https://chatgpt.com/backend-api/wham/usage` |
 
-Remote Controlを使っていない場合やネットワークに接続できない場合も、ローカルにあるセッション名と状態監視は動作します。
+Local session names and status monitoring continue to work when Remote Control is not in use or the network is unavailable.
 
-## プライバシーと認証情報
+## Privacy and credentials
 
-- 会話本文、プロンプト全文、ファイル内容、ツールの入出力は保存しません。
-- セッション名は最大80文字へ短縮し、表示用に最大3行へ分割します。
-- 利用率取得では既存のClaude Code/Codexログインを読みますが、トークンを独自ファイルへ保存しません。
-- 認証トークン、Cookie、APIレスポンス本文をログへ出しません。
-- 状態フックの送信先はlocalhostだけで、外部へ転送しません。
-- 外部API通信は利用率とRemote Controlのタイトル取得に限られます。
+- The plugin does not store conversation bodies, full prompts, file contents, or tool input and output.
+- Session names are limited to 80 characters and split into at most three display lines.
+- Usage providers read the existing Claude Code and Codex login, but the plugin does not save tokens in its own files.
+- Authentication tokens, cookies, and API response bodies are never written to logs.
+- Status hooks send only to localhost and are not forwarded externally.
+- External API traffic is limited to usage data and Remote Control title lookup.
 
-## トラブルシューティング
+## Troubleshooting
 
-### `未接続` と表示される
+### The key shows `未接続` (Disconnected)
 
-1. Stream Deckアプリを起動していることを確認します。
-2. プラグインを再インストールするか、Stream Deckアプリを再起動します。
-3. ローカルサーバーを確認します。
+1. Make sure the Stream Deck app is running.
+2. Reinstall the plugin or restart the Stream Deck app.
+3. Check the local server:
 
 ```sh
 curl http://127.0.0.1:37654/health
 ```
 
-`{"ok":true,...}` が返ればプラグインは動作しています。ポート37654を別のアプリが使用していないかも確認してください。
+If the response begins with `{"ok":true,...}`, the plugin is running. Also check that another application is not using port 37654.
 
-### タスクが表示されない
+### Tasks do not appear
 
-- `npm run hooks:install` と `npm run codex-hooks:install` を再実行します。
-- Codexの `/hooks` でユーザーフックが信頼済みか確認します。
-- Claude Code/Codexで新しい依頼を1件送り、ライフサイクルイベントを発生させます。
+- Run `npm run hooks:install` and `npm run codex-hooks:install` again.
+- In Codex, open `/hooks` and confirm that the user hook is trusted.
+- Send one new request in Claude Code or Codex to generate a lifecycle event.
 
-### セッション名が古い、または依頼文になっている
+### A session name is stale or shows a request instead of the chat title
 
-- Claude/Codex側でチャット名を変更します。
-- Claude Remote Control名は反映まで約15秒待ちます。
-- Codex名はローカルのセッションインデックス更新後に反映されます。
+- Rename the chat in Claude or Codex.
+- Allow about 15 seconds for a Claude Remote Control title to update.
+- A Codex title updates after its local session index is written.
 
-### 利用率が `ERR`、`LOGIN`、`—` になる
+### Usage shows `ERR`, `LOGIN`, or `—`
 
-- `ERR`: ネットワークエラーやHTTP 429です。成功値またはローカル値がない場合だけ表示されます。5分以上待って再確認します。
-- `LOGIN`: 対象CLIへログインし直します。
-- `—`: APIまたは契約プランが該当期間の数値を提供していません。
+- `ERR`: A network error or HTTP 429 occurred and there is no successful or local fallback value. Wait at least five minutes and check again.
+- `LOGIN`: Sign in to the corresponding CLI again.
+- `—`: The API or subscription plan does not provide a value for that time window.
 
-### タスクキーで目的のアプリが開かない
+### A task key opens the wrong app
 
-起動元を特定できないセッションではClaudeアプリまたはChatGPTアプリを開きます。セッションがターミナルやエディターの子プロセスとして動いていない場合、個別ウインドウまでは特定できません。
+If the originating app cannot be identified, the plugin opens Claude or ChatGPT. It cannot identify an individual window when the session is not running as a child process of a terminal or editor.
 
-## アップデート
+## Updating
 
-新しい `.streamDeckPlugin` をダブルクリックして上書きインストールします。ソースから更新する場合:
+Double-click a newer `.streamDeckPlugin` file to install it over the existing version. To update from source:
 
 ```sh
 git pull
@@ -232,22 +234,22 @@ npm run hooks:install
 npm run codex-hooks:install
 ```
 
-フック導入スクリプトは繰り返し実行しても同じ専用エントリを重複追加しません。
+The hook installers are idempotent and do not add duplicate plugin entries when run repeatedly.
 
-## アンインストール
+## Uninstalling
 
 ```sh
 npm run hooks:uninstall
 npm run codex-hooks:uninstall
 ```
 
-Stream Deckアプリの設定から `Claude & Codex Status` をアンインストールします。保存状態も不要な場合は、次のフォルダをFinderから削除できます。
+Remove `Claude & Codex Status` from the Stream Deck app settings. If you also want to remove saved display state, delete this directory in Finder:
 
 ```text
 ~/Library/Application Support/Claude-Codex-Status
 ```
 
-## 開発
+## Development
 
 ```sh
 npm install
@@ -258,39 +260,39 @@ npm run validate
 npm run pack
 ```
 
-| コマンド | 内容 |
+| Command | Purpose |
 | --- | --- |
-| `npm run watch` | 変更を監視してビルドし、プラグインを再起動 |
-| `npm run preview` | README用の匿名プレビューを再生成 |
-| `npm run demo -- working claude` | Claude作業中のテストイベントを送信 |
-| `npm run demo -- attention codex` | Codex確認待ちのテストイベントを送信 |
+| `npm run watch` | Watch, build, and restart the plugin after changes |
+| `npm run preview` | Regenerate the anonymous README preview |
+| `npm run demo -- working claude` | Send a test Claude working event |
+| `npm run demo -- attention codex` | Send a test Codex attention event |
 
-状態は `ready`、`working`、`attention`、`done`、`error`、`offline`、エージェントは `claude` または `codex` を指定できます。
+Valid states are `ready`, `working`, `attention`, `done`, `error`, and `offline`. Valid agents are `claude` and `codex`.
 
-主な実装:
+Key implementation files:
 
-| ファイル | 役割 |
+| File | Responsibility |
 | --- | --- |
-| `src/status.ts` | セッション状態、並べ替え、復元 |
-| `src/render.ts` | 概要・タスクキーのSVG描画 |
-| `src/codex-task-monitor.ts` | Codexローカルタスク監視 |
-| `src/claude-task-name.ts` | Claudeのローカルセッション名解決 |
-| `src/claude-remote-title.ts` | Claude Remote Control名の解決 |
-| `src/session-app.ts` | タスクから起動元アプリを特定 |
-| `src/usage.ts` | Claude/Codex利用率の取得・キャッシュ・バックオフ |
-| `src/server.ts` | localhostのフック受信サーバー |
+| `src/status.ts` | Session state, sorting, and restoration |
+| `src/render.ts` | Summary and task key SVG rendering |
+| `src/codex-task-monitor.ts` | Local Codex task monitoring |
+| `src/claude-task-name.ts` | Local Claude session title resolution |
+| `src/claude-remote-title.ts` | Claude Remote Control title resolution |
+| `src/session-app.ts` | Originating app detection and fallback |
+| `src/usage.ts` | Claude/Codex usage retrieval, caching, and backoff |
+| `src/server.ts` | Localhost hook receiver |
 
-エージェントがこのリポジトリを変更する場合は [`AGENTS.md`](AGENTS.md) の作業規約も参照してください。
+Agents modifying this repository should also follow [`AGENTS.md`](AGENTS.md).
 
-## リリースとバージョン
+## Releases and versioning
 
-- Gitタグ: `v<major>.<minor>.<patch>`
-- npmパッケージ: `<major>.<minor>.<patch>`
+- Git tag: `v<major>.<minor>.<patch>`
+- npm package: `<major>.<minor>.<patch>`
 - Stream Deck manifest: `<major>.<minor>.<patch>.0`
-- 配布物: `dist/com.atsu.claude-code-status.streamDeckPlugin`
+- Distribution file: `dist/com.atsu.claude-code-status.streamDeckPlugin`
 
-リリース前に `npm run pack` を実行し、型チェック、全テスト、ビルド、Stream Deck manifest検証を通します。
+Before a release, `npm run pack` must pass type checking, all tests, the build, and Stream Deck manifest validation.
 
-## ライセンス
+## License
 
 [MIT License](LICENSE)
