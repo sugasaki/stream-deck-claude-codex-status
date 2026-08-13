@@ -2,10 +2,12 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  claudeCodeUserAgent,
   claudeFiveHourUsage,
   claudeFiveHourUsageFromHistory,
   codexWeeklyUsage,
-  CombinedUsageProvider
+  CombinedUsageProvider,
+  UsageRateLimitError
 } from "../src/usage";
 import { combinedUsageSvg } from "../src/usage-render";
 
@@ -33,6 +35,11 @@ test("reads Claude's latest fresh five-hour usage from its local history", () =>
     }), now),
     undefined
   );
+});
+
+test("uses Claude Code's user agent format with a safe fallback", () => {
+  assert.equal(claudeCodeUserAgent("2.1.231"), "claude-code/2.1.231");
+  assert.equal(claudeCodeUserAgent("invalid"), "claude-code/2.1.0");
 });
 
 test("selects Codex's weekly window and ignores its five-hour window", () => {
@@ -65,8 +72,10 @@ test("loads Claude and Codex usage together and caches the result", async () => 
     now: () => 1_000,
     readClaudeLocalUsage: async () => undefined,
     readClaudeAccessToken: async () => "claude-token",
-    requestClaudeUsage: async () => {
+    readClaudeCodeVersion: async () => "2.1.231",
+    requestClaudeUsage: async (_accessToken, userAgent) => {
       claudeRequests++;
+      assert.equal(userAgent, "claude-code/2.1.231");
       return { five_hour: { utilization: 31 } };
     },
     readCodexCredentials: async () => ({ accessToken: "codex-token" }),
@@ -87,26 +96,51 @@ test("loads Claude and Codex usage together and caches the result", async () => 
   assert.equal(codexRequests, 1);
 });
 
-test("prefers Claude's local usage and avoids the rate-limited API", async () => {
-  let credentialReads = 0;
+test("limits Claude API refreshes independently from display refreshes", async () => {
+  let now = 1_000;
   let apiRequests = 0;
   const provider = new CombinedUsageProvider({
+    cacheMs: 0,
+    claudeApiMinRefreshMs: 5 * 60_000,
+    now: () => now,
     readClaudeLocalUsage: async () => ({ usedPercent: 35, resetAt: null, state: "ok" }),
-    readClaudeAccessToken: async () => {
-      credentialReads++;
-      return "claude-token";
-    },
+    readClaudeAccessToken: async () => "claude-token",
+    readClaudeCodeVersion: async () => "2.1.231",
     requestClaudeUsage: async () => {
       apiRequests++;
-      throw new Error("HTTP 429");
+      return { five_hour: { utilization: 36 + apiRequests } };
     },
     readCodexCredentials: async () => undefined
   });
 
-  const snapshot = await provider.getUsage();
-  assert.equal(snapshot.claude.usedPercent, 35);
-  assert.equal(credentialReads, 0);
-  assert.equal(apiRequests, 0);
+  assert.equal((await provider.getUsage(true)).claude.usedPercent, 37);
+  now += 60_000;
+  assert.equal((await provider.getUsage(true)).claude.usedPercent, 37);
+  assert.equal(apiRequests, 1);
+  now += 5 * 60_000;
+  assert.equal((await provider.getUsage(true)).claude.usedPercent, 38);
+  assert.equal(apiRequests, 2);
+});
+
+test("backs off after Claude HTTP 429 and keeps the local fallback", async () => {
+  let now = 1_000;
+  let apiRequests = 0;
+  const provider = new CombinedUsageProvider({
+    cacheMs: 0,
+    now: () => now,
+    readClaudeLocalUsage: async () => ({ usedPercent: 35, resetAt: null, state: "ok" }),
+    readClaudeAccessToken: async () => "claude-token",
+    requestClaudeUsage: async () => {
+      apiRequests++;
+      throw new UsageRateLimitError();
+    },
+    readCodexCredentials: async () => undefined
+  });
+
+  assert.equal((await provider.getUsage(true)).claude.usedPercent, 35);
+  now += 60_000;
+  assert.equal((await provider.getUsage(true)).claude.usedPercent, 35);
+  assert.equal(apiRequests, 1);
 });
 
 test("renders Claude five-hour and Codex weekly usage in one key", () => {

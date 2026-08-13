@@ -9,6 +9,9 @@ const CLAUDE_USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
 const CODEX_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
 const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60;
 const CLAUDE_LOCAL_USAGE_MAX_AGE_MS = 30 * 60 * 1_000;
+const CLAUDE_API_MIN_REFRESH_MS = 5 * 60 * 1_000;
+const CLAUDE_RATE_LIMIT_COOLDOWN_MS = 5 * 60 * 1_000;
+const CLAUDE_CODE_VERSION_FALLBACK = "2.1.0";
 
 export type UsageReadingState = "ok" | "unavailable" | "auth_required" | "error";
 
@@ -55,16 +58,24 @@ interface CodexCredentials {
 
 export interface CombinedUsageProviderOptions {
   cacheMs?: number;
+  claudeApiMinRefreshMs?: number;
   now?: () => number;
   readClaudeLocalUsage?: () => Promise<UsageReading | undefined>;
   readClaudeAccessToken?: () => Promise<string | undefined>;
-  requestClaudeUsage?: (accessToken: string) => Promise<ClaudeUsageResponse>;
+  readClaudeCodeVersion?: () => Promise<string | undefined>;
+  requestClaudeUsage?: (accessToken: string, userAgent: string) => Promise<ClaudeUsageResponse>;
   readCodexCredentials?: () => Promise<CodexCredentials | undefined>;
   requestCodexUsage?: (credentials: CodexCredentials) => Promise<CodexUsageResponse>;
   onError?: (provider: "claude" | "codex", error: unknown) => void;
 }
 
 class UsageAuthenticationError extends Error {}
+
+export class UsageRateLimitError extends Error {
+  constructor(readonly retryAfterAt?: number) {
+    super("Usage request was rate limited");
+  }
+}
 
 const emptyReading = (state: UsageReadingState): UsageReading => ({
   usedPercent: null,
@@ -192,16 +203,60 @@ async function defaultReadClaudeLocalUsage(): Promise<UsageReading | undefined> 
   }
 }
 
-async function defaultRequestClaudeUsage(accessToken: string): Promise<ClaudeUsageResponse> {
+async function defaultReadClaudeCodeVersion(): Promise<string | undefined> {
+  const candidates = [
+    path.join(homedir(), ".local", "bin", "claude"),
+    "/opt/homebrew/bin/claude",
+    "/usr/local/bin/claude",
+    "claude"
+  ];
+  for (const executable of candidates) {
+    try {
+      const { stdout } = await execFileAsync(executable, ["--version"], {
+        encoding: "utf8",
+        maxBuffer: 256 * 1024,
+        timeout: 3_000
+      });
+      const version = stdout.match(/\b\d+\.\d+\.\d+\b/)?.[0];
+      if (version) return version;
+    } catch {
+      continue;
+    }
+  }
+  return undefined;
+}
+
+export function claudeCodeUserAgent(version?: string): string {
+  const normalized = version?.trim().match(/^\d+\.\d+\.\d+$/)?.[0] ?? CLAUDE_CODE_VERSION_FALLBACK;
+  return `claude-code/${normalized}`;
+}
+
+function retryAfterAt(value: string | null, now = Date.now()): number | undefined {
+  if (!value) return undefined;
+  const seconds = Number(value);
+  if (Number.isFinite(seconds) && seconds >= 0) return now + seconds * 1_000;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+async function defaultRequestClaudeUsage(
+  accessToken: string,
+  userAgent: string
+): Promise<ClaudeUsageResponse> {
   const response = await fetch(CLAUDE_USAGE_URL, {
     headers: {
       authorization: `Bearer ${accessToken}`,
-      "anthropic-version": "2023-06-01",
-      "anthropic-beta": "oauth-2025-04-20"
+      accept: "application/json",
+      "content-type": "application/json",
+      "anthropic-beta": "oauth-2025-04-20",
+      "user-agent": userAgent
     },
     signal: AbortSignal.timeout(8_000)
   });
   if (response.status === 401 || response.status === 403) throw new UsageAuthenticationError();
+  if (response.status === 429) {
+    throw new UsageRateLimitError(retryAfterAt(response.headers.get("retry-after")));
+  }
   if (!response.ok) throw new Error(`Claude usage returned HTTP ${response.status}`);
   return await response.json() as ClaudeUsageResponse;
 }
@@ -242,22 +297,30 @@ async function defaultRequestCodexUsage(credentials: CodexCredentials): Promise<
 
 export class CombinedUsageProvider {
   readonly #cacheMs: number;
+  readonly #claudeApiMinRefreshMs: number;
   readonly #now: () => number;
   readonly #readClaudeLocalUsage: () => Promise<UsageReading | undefined>;
   readonly #readClaudeAccessToken: () => Promise<string | undefined>;
-  readonly #requestClaudeUsage: (accessToken: string) => Promise<ClaudeUsageResponse>;
+  readonly #readClaudeCodeVersion: () => Promise<string | undefined>;
+  readonly #requestClaudeUsage: (accessToken: string, userAgent: string) => Promise<ClaudeUsageResponse>;
   readonly #readCodexCredentials: () => Promise<CodexCredentials | undefined>;
   readonly #requestCodexUsage: (credentials: CodexCredentials) => Promise<CodexUsageResponse>;
   readonly #onError?: (provider: "claude" | "codex", error: unknown) => void;
   #cached?: CombinedUsageSnapshot;
   #cachedAt = 0;
   #pending?: Promise<CombinedUsageSnapshot>;
+  #claudeUserAgent?: string;
+  #lastClaudeSuccess?: UsageReading;
+  #lastClaudeSuccessAt = 0;
+  #claudeBlockedUntil = 0;
 
   constructor(options: CombinedUsageProviderOptions = {}) {
     this.#cacheMs = options.cacheMs ?? 60_000;
+    this.#claudeApiMinRefreshMs = options.claudeApiMinRefreshMs ?? CLAUDE_API_MIN_REFRESH_MS;
     this.#now = options.now ?? Date.now;
     this.#readClaudeLocalUsage = options.readClaudeLocalUsage ?? defaultReadClaudeLocalUsage;
     this.#readClaudeAccessToken = options.readClaudeAccessToken ?? defaultReadClaudeAccessToken;
+    this.#readClaudeCodeVersion = options.readClaudeCodeVersion ?? defaultReadClaudeCodeVersion;
     this.#requestClaudeUsage = options.requestClaudeUsage ?? defaultRequestClaudeUsage;
     this.#readCodexCredentials = options.readCodexCredentials ?? defaultReadCodexCredentials;
     this.#requestCodexUsage = options.requestCodexUsage ?? defaultRequestCodexUsage;
@@ -285,15 +348,38 @@ export class CombinedUsageProvider {
   }
 
   async #claudeUsage(): Promise<UsageReading> {
+    const now = this.#now();
+    if (this.#lastClaudeSuccess && now - this.#lastClaudeSuccessAt < this.#claudeApiMinRefreshMs) {
+      return this.#lastClaudeSuccess;
+    }
+    const localUsage = await this.#readClaudeLocalUsage();
+    if (now < this.#claudeBlockedUntil) {
+      return this.#lastClaudeSuccess ?? localUsage ?? emptyReading("error");
+    }
     try {
-      const localUsage = await this.#readClaudeLocalUsage();
-      if (localUsage) return localUsage;
       const accessToken = await this.#readClaudeAccessToken();
-      if (!accessToken) return emptyReading("auth_required");
-      return claudeFiveHourUsage(await this.#requestClaudeUsage(accessToken));
+      if (!accessToken) return localUsage ?? emptyReading("auth_required");
+      this.#claudeUserAgent ??= claudeCodeUserAgent(await this.#readClaudeCodeVersion());
+      const reading = claudeFiveHourUsage(
+        await this.#requestClaudeUsage(accessToken, this.#claudeUserAgent)
+      );
+      if (reading.state !== "ok") return localUsage ?? reading;
+      this.#lastClaudeSuccess = reading;
+      this.#lastClaudeSuccessAt = now;
+      this.#claudeBlockedUntil = 0;
+      return reading;
     } catch (error) {
       this.#onError?.("claude", error);
-      return emptyReading(error instanceof UsageAuthenticationError ? "auth_required" : "error");
+      if (error instanceof UsageRateLimitError) {
+        this.#claudeBlockedUntil = Math.max(
+          this.#claudeBlockedUntil,
+          error.retryAfterAt && error.retryAfterAt > now
+            ? error.retryAfterAt
+            : now + CLAUDE_RATE_LIMIT_COOLDOWN_MS
+        );
+      }
+      if (error instanceof UsageAuthenticationError) return emptyReading("auth_required");
+      return this.#lastClaudeSuccess ?? localUsage ?? emptyReading("error");
     }
   }
 
