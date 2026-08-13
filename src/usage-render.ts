@@ -1,4 +1,5 @@
 import type { CombinedUsageSnapshot, UsageReading } from "./usage";
+import { renderAgentIcon } from "./agent-icons";
 
 const BACKGROUND = "#080808";
 const FRAME = "#4A4A4D";
@@ -33,11 +34,11 @@ export function combinedUsageSvg(snapshot: CombinedUsageSnapshot): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">
   <rect x="3" y="3" width="138" height="138" rx="21" fill="${BACKGROUND}" stroke="${FRAME}" stroke-width="6"/>
   <text x="12" y="22" fill="${TEXT}" opacity="0.82" font-size="12" font-weight="700" letter-spacing="0.7" font-family="Arial,sans-serif">USAGE</text>
-  <text x="12" y="43" fill="${CLAUDE}" font-size="9.5" font-weight="700" font-family="Arial,sans-serif">CLAUDE</text>
+  <g data-usage-logo="claude">${renderAgentIcon("claude", CLAUDE, 9, 22, 26)}</g>
   ${usageValue(snapshot.claude, "5h", 44)}
   ${usageBar(snapshot.claude, 51, CLAUDE)}
   <line x1="12" y1="76" x2="132" y2="76" stroke="${FRAME}" stroke-width="1" opacity="0.65"/>
-  <text x="12" y="99" fill="${CODEX}" font-size="9.5" font-weight="700" font-family="Arial,sans-serif">CODEX</text>
+  <g data-usage-logo="codex">${renderAgentIcon("codex", CODEX, 9, 78, 26)}</g>
   ${usageValue(snapshot.codex, "w", 100)}
   ${usageBar(snapshot.codex, 108, CODEX)}
 </svg>`;
