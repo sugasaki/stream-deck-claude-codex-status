@@ -2,6 +2,7 @@ import { writeFile } from "node:fs/promises";
 
 import { renderStatus } from "../src/render";
 import type { StatusSnapshot } from "../src/status";
+import { renderCombinedUsage } from "../src/usage-render";
 
 const now = Date.now();
 const base = {
@@ -87,16 +88,6 @@ const snapshots: StatusSnapshot[] = [
     task: "README更新エラー",
     detail: "ファイル編集でエラー",
     updatedAt: now - 30 * 60_000
-  },
-  {
-    ...base,
-    sessionId: "claude:previous-5",
-    agent: "claude",
-    kind: "working",
-    project: "backend",
-    task: "APIテストを追加",
-    detail: "テスト実行",
-    updatedAt: now - 60 * 60_000
   }
 ];
 
@@ -113,14 +104,23 @@ const images = snapshots
     return `<image x="${x}" y="${y}" width="${key}" height="${key}" href="${renderStatus({ ...snapshot, slot: index }, now)}"/>`;
   })
   .join("\n");
+const usageIndex = 7;
+const usageX = left + (usageIndex % 4) * (key + gap);
+const usageY = top + Math.floor(usageIndex / 4) * (key + gap);
+const usageImage = `<image x="${usageX}" y="${usageY}" width="${key}" height="${key}" href="${renderCombinedUsage({
+  claude: { usedPercent: 42, resetAt: null, state: "ok" },
+  codex: { usedPercent: 38, resetAt: null, state: "ok" },
+  updatedAt: now
+})}"/>`;
 
 const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
   <rect width="${width}" height="${height}" rx="28" fill="#090B0F"/>
   <text x="24" y="34" fill="#FFFFFF" font-size="18" font-weight="700" font-family="-apple-system,BlinkMacSystemFont,Helvetica Neue,Hiragino Sans,Arial,sans-serif">Stream Deck Neo · 最終更新日時順</text>
-  <text x="666" y="34" text-anchor="end" fill="#FFFFFF" opacity="0.5" font-size="11" font-family="-apple-system,BlinkMacSystemFont,Helvetica Neue,Hiragino Sans,Arial,sans-serif">最新から5つ前まで表示</text>
+  <text x="666" y="34" text-anchor="end" fill="#FFFFFF" opacity="0.5" font-size="11" font-family="-apple-system,BlinkMacSystemFont,Helvetica Neue,Hiragino Sans,Arial,sans-serif">最新から4つ前まで表示</text>
   ${images}
+  ${usageImage}
 </svg>`;
 
-const output = process.argv[2] || "dist/session-preview.svg";
+const output = process.argv[2] || "assets/readme-preview.svg";
 await writeFile(output, svg, "utf8");
 console.log(output);

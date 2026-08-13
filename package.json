@@ -1,6 +1,6 @@
 {
   "name": "claude-code-status-stream-deck",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "private": true,
   "type": "module",
   "description": "Display Claude Code and Codex task status, Claude five-hour usage, and Codex weekly usage on Stream Deck Neo.",
@@ -10,6 +10,7 @@
     "test": "tsx --test test/*.test.ts",
     "validate": "npm run check && npm test && npm run build && streamdeck validate com.atsu.claude-code-status.sdPlugin",
     "pack": "npm run validate && streamdeck pack com.atsu.claude-code-status.sdPlugin --output dist --force",
+    "preview": "tsx scripts/render-preview.ts assets/readme-preview.svg",
     "watch": "rollup -c -w --watch.onEnd=\"streamdeck restart com.atsu.claude-code-status\"",
     "hooks:install": "node scripts/install-hooks.mjs",
     "hooks:uninstall": "node scripts/uninstall-hooks.mjs",
