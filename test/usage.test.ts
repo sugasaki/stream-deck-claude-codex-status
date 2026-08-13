@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   claudeFiveHourUsage,
+  claudeFiveHourUsageFromHistory,
   codexWeeklyUsage,
   CombinedUsageProvider
 } from "../src/usage";
@@ -12,6 +13,25 @@ test("reads only Claude's five-hour usage window", () => {
   assert.deepEqual(
     claudeFiveHourUsage({ five_hour: { utilization: 23.4, resets_at: "2026-08-14T01:00:00Z" } }),
     { usedPercent: 23, resetAt: Date.parse("2026-08-14T01:00:00Z"), state: "ok" }
+  );
+});
+
+test("reads Claude's latest fresh five-hour usage from its local history", () => {
+  const now = Date.parse("2026-08-14T01:30:00Z");
+  assert.deepEqual(
+    claudeFiveHourUsageFromHistory(JSON.stringify({
+      samples: [
+        { t: now - 20 * 60_000, u: { fh: 28 } },
+        { t: now - 5 * 60_000, u: { fh: 35 } }
+      ]
+    }), now),
+    { usedPercent: 35, resetAt: null, state: "ok" }
+  );
+  assert.equal(
+    claudeFiveHourUsageFromHistory(JSON.stringify({
+      samples: [{ t: now - 31 * 60_000, u: { fh: 35 } }]
+    }), now),
+    undefined
   );
 });
 
@@ -43,6 +63,7 @@ test("loads Claude and Codex usage together and caches the result", async () => 
   let codexRequests = 0;
   const provider = new CombinedUsageProvider({
     now: () => 1_000,
+    readClaudeLocalUsage: async () => undefined,
     readClaudeAccessToken: async () => "claude-token",
     requestClaudeUsage: async () => {
       claudeRequests++;
@@ -64,6 +85,28 @@ test("loads Claude and Codex usage together and caches the result", async () => 
   assert.equal(first.codex.usedPercent, 42);
   assert.equal(claudeRequests, 1);
   assert.equal(codexRequests, 1);
+});
+
+test("prefers Claude's local usage and avoids the rate-limited API", async () => {
+  let credentialReads = 0;
+  let apiRequests = 0;
+  const provider = new CombinedUsageProvider({
+    readClaudeLocalUsage: async () => ({ usedPercent: 35, resetAt: null, state: "ok" }),
+    readClaudeAccessToken: async () => {
+      credentialReads++;
+      return "claude-token";
+    },
+    requestClaudeUsage: async () => {
+      apiRequests++;
+      throw new Error("HTTP 429");
+    },
+    readCodexCredentials: async () => undefined
+  });
+
+  const snapshot = await provider.getUsage();
+  assert.equal(snapshot.claude.usedPercent, 35);
+  assert.equal(credentialReads, 0);
+  assert.equal(apiRequests, 0);
 });
 
 test("renders Claude five-hour and Codex weekly usage in one key", () => {

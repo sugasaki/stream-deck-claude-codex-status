@@ -8,6 +8,7 @@ const execFileAsync = promisify(execFile);
 const CLAUDE_USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
 const CODEX_USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
 const ONE_WEEK_SECONDS = 7 * 24 * 60 * 60;
+const CLAUDE_LOCAL_USAGE_MAX_AGE_MS = 30 * 60 * 1_000;
 
 export type UsageReadingState = "ok" | "unavailable" | "auth_required" | "error";
 
@@ -55,10 +56,12 @@ interface CodexCredentials {
 export interface CombinedUsageProviderOptions {
   cacheMs?: number;
   now?: () => number;
+  readClaudeLocalUsage?: () => Promise<UsageReading | undefined>;
   readClaudeAccessToken?: () => Promise<string | undefined>;
   requestClaudeUsage?: (accessToken: string) => Promise<ClaudeUsageResponse>;
   readCodexCredentials?: () => Promise<CodexCredentials | undefined>;
   requestCodexUsage?: (credentials: CodexCredentials) => Promise<CodexUsageResponse>;
+  onError?: (provider: "claude" | "codex", error: unknown) => void;
 }
 
 class UsageAuthenticationError extends Error {}
@@ -92,6 +95,32 @@ export function claudeFiveHourUsage(response: ClaudeUsageResponse): UsageReading
     resetAt: resetAtFromIso(response.five_hour?.resets_at),
     state: "ok"
   };
+}
+
+export function claudeFiveHourUsageFromHistory(
+  content: string,
+  now = Date.now(),
+  maxAgeMs = CLAUDE_LOCAL_USAGE_MAX_AGE_MS
+): UsageReading | undefined {
+  let history: { samples?: Array<{ t?: unknown; u?: { fh?: unknown } }> };
+  try {
+    history = JSON.parse(content) as typeof history;
+  } catch {
+    return undefined;
+  }
+  const sample = (history.samples ?? [])
+    .filter((item) =>
+      typeof item.t === "number" &&
+      Number.isFinite(item.t) &&
+      item.t <= now + 60_000 &&
+      now - item.t <= maxAgeMs
+    )
+    .sort((left, right) => Number(right.t) - Number(left.t))[0];
+  if (!sample) return undefined;
+  const usedPercent = percent(sample.u?.fh);
+  return usedPercent === null
+    ? undefined
+    : { usedPercent, resetAt: null, state: "ok" };
 }
 
 function isWeeklyWindow(window: CodexUsageWindow): boolean {
@@ -148,6 +177,21 @@ async function defaultReadClaudeAccessToken(): Promise<string | undefined> {
   }
 }
 
+async function defaultReadClaudeLocalUsage(): Promise<UsageReading | undefined> {
+  try {
+    const historyPath = path.join(
+      homedir(),
+      "Library",
+      "Application Support",
+      "Claude",
+      "plan-usage-history.json"
+    );
+    return claudeFiveHourUsageFromHistory(await readFile(historyPath, "utf8"));
+  } catch {
+    return undefined;
+  }
+}
+
 async function defaultRequestClaudeUsage(accessToken: string): Promise<ClaudeUsageResponse> {
   const response = await fetch(CLAUDE_USAGE_URL, {
     headers: {
@@ -199,10 +243,12 @@ async function defaultRequestCodexUsage(credentials: CodexCredentials): Promise<
 export class CombinedUsageProvider {
   readonly #cacheMs: number;
   readonly #now: () => number;
+  readonly #readClaudeLocalUsage: () => Promise<UsageReading | undefined>;
   readonly #readClaudeAccessToken: () => Promise<string | undefined>;
   readonly #requestClaudeUsage: (accessToken: string) => Promise<ClaudeUsageResponse>;
   readonly #readCodexCredentials: () => Promise<CodexCredentials | undefined>;
   readonly #requestCodexUsage: (credentials: CodexCredentials) => Promise<CodexUsageResponse>;
+  readonly #onError?: (provider: "claude" | "codex", error: unknown) => void;
   #cached?: CombinedUsageSnapshot;
   #cachedAt = 0;
   #pending?: Promise<CombinedUsageSnapshot>;
@@ -210,10 +256,12 @@ export class CombinedUsageProvider {
   constructor(options: CombinedUsageProviderOptions = {}) {
     this.#cacheMs = options.cacheMs ?? 60_000;
     this.#now = options.now ?? Date.now;
+    this.#readClaudeLocalUsage = options.readClaudeLocalUsage ?? defaultReadClaudeLocalUsage;
     this.#readClaudeAccessToken = options.readClaudeAccessToken ?? defaultReadClaudeAccessToken;
     this.#requestClaudeUsage = options.requestClaudeUsage ?? defaultRequestClaudeUsage;
     this.#readCodexCredentials = options.readCodexCredentials ?? defaultReadCodexCredentials;
     this.#requestCodexUsage = options.requestCodexUsage ?? defaultRequestCodexUsage;
+    this.#onError = options.onError;
   }
 
   async getUsage(force = false): Promise<CombinedUsageSnapshot> {
@@ -238,10 +286,13 @@ export class CombinedUsageProvider {
 
   async #claudeUsage(): Promise<UsageReading> {
     try {
+      const localUsage = await this.#readClaudeLocalUsage();
+      if (localUsage) return localUsage;
       const accessToken = await this.#readClaudeAccessToken();
       if (!accessToken) return emptyReading("auth_required");
       return claudeFiveHourUsage(await this.#requestClaudeUsage(accessToken));
     } catch (error) {
+      this.#onError?.("claude", error);
       return emptyReading(error instanceof UsageAuthenticationError ? "auth_required" : "error");
     }
   }
@@ -252,6 +303,7 @@ export class CombinedUsageProvider {
       if (!credentials) return emptyReading("auth_required");
       return codexWeeklyUsage(await this.#requestCodexUsage(credentials));
     } catch (error) {
+      this.#onError?.("codex", error);
       return emptyReading(error instanceof UsageAuthenticationError ? "auth_required" : "error");
     }
   }

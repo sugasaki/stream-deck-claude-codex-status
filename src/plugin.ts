@@ -28,7 +28,10 @@ const store = new StatusStore();
 const persistence = new StatePersistence();
 const claudeRemoteTitles = new ClaudeRemoteTitleResolver();
 const claudeTaskNames = new ClaudeTaskNameResolver();
-const usageProvider = new CombinedUsageProvider();
+const usageProvider = new CombinedUsageProvider({
+  onError: (provider, error) =>
+    streamDeck.logger.error(`Could not read ${provider} usage: ${String(error)}`)
+});
 const usageAction = new CombinedUsageAction(usageProvider);
 const sessionAppActivator = new SessionAppActivator({
   onError: (error) => streamDeck.logger.error(`Could not activate session app: ${String(error)}`)
