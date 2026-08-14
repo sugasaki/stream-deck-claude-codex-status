@@ -9,10 +9,6 @@ Claude CodeとCodexのタスクセッションをStream Deckへ表示するmacOS
 
 エージェントへ指示を送ったあと別の作業へ移っても、返信完了や許可要求を `確認待ち` と実際のセッション名で知らせます。Claude CodeとCodexの複数タスクを一つの画面で見渡し、タスクキーを押して元のアプリへ戻れます。
 
-<p align="center">
-  <img src="assets/stream-deck-neo.jpg" alt="Elgato Stream Deck Neo 本体" width="640">
-</p>
-
 ![Stream Deck Neo 1ページ目の推奨配置](assets/readme-preview.svg)
 
 ## 主な機能
@@ -28,6 +24,11 @@ Claude CodeとCodexのタスクセッションをStream Deckへ表示するmacOS
 - Stream Deck再起動後も最近のタスク状態を復元
 
 ## 必要環境
+
+<p align="center">
+  <strong>動作する機材の例：Elgato Stream Deck Neo</strong><br>
+  <img src="assets/stream-deck-neo.jpg" alt="Elgato Stream Deck Neo 本体" width="520">
+</p>
 
 | 項目 | 要件 |
 | --- | --- |

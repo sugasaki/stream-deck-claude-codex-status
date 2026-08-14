@@ -9,10 +9,6 @@ A macOS Stream Deck plugin that displays live Claude Code and Codex task session
 
 After you send an instruction and switch to another task, the plugin tells you when an agent has finished replying or needs permission. It shows `確認待ち` (Needs attention) together with the actual session name, lets you see multiple Claude Code and Codex tasks at a glance, and brings the originating app to the foreground when you press a task key.
 
-<p align="center">
-  <img src="assets/stream-deck-neo.jpg" alt="Elgato Stream Deck Neo" width="640">
-</p>
-
 ![Recommended Stream Deck Neo page 1 layout](assets/readme-preview.svg)
 
 ## Features
@@ -28,6 +24,11 @@ After you send an instruction and switch to another task, the plugin tells you w
 - Restores recent task state after Stream Deck restarts
 
 ## Requirements
+
+<p align="center">
+  <strong>Supported hardware example: Elgato Stream Deck Neo</strong><br>
+  <img src="assets/stream-deck-neo.jpg" alt="Elgato Stream Deck Neo" width="520">
+</p>
 
 | Item | Requirement |
 | --- | --- |
