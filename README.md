@@ -11,6 +11,12 @@ After you send an instruction and switch to another task, the plugin tells you w
 
 ![Recommended Stream Deck Neo page 1 layout](assets/readme-preview.svg)
 
+<p align="center">
+  <strong>Live device demo</strong><br>
+  <img src="assets/stream-deck-neo-demo.gif" alt="Claude and Codex status running on Stream Deck Neo" width="420"><br>
+  <sub>Session names and usage values are anonymized.</sub>
+</p>
+
 ## Features
 
 - Shows `作業中` (Working), `確認待ち` (Needs attention), and `エラー` (Error) for Claude Code and Codex

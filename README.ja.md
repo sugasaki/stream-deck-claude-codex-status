@@ -11,6 +11,12 @@ Claude CodeとCodexのタスクセッションをStream Deckへ表示するmacOS
 
 ![Stream Deck Neo 1ページ目の推奨配置](assets/readme-preview.svg)
 
+<p align="center">
+  <strong>実機での動作サンプル</strong><br>
+  <img src="assets/stream-deck-neo-demo.gif" alt="Stream Deck Neoで動作するClaudeとCodexのステータス表示" width="420"><br>
+  <sub>セッション名と利用率は公開用に匿名化しています。</sub>
+</p>
+
 ## 主な機能
 
 - Claude CodeとCodexの `作業中`、`確認待ち`、`エラー` を表示
