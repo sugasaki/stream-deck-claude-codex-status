@@ -19,6 +19,7 @@ After you send an instruction and switch to another task, the plugin tells you w
 - Flashes the red attention marker for ten seconds after a task starts waiting
 - Animates a large working indicator at five frames per second
 - Brings the app that started a task to the foreground when its key is pressed
+- Removes a task waiting for confirmation when its key is held for at least 0.8 seconds
 - Combines Claude five-hour usage and Codex weekly usage on one key
 - Restores recent task state after Stream Deck restarts
 
@@ -114,7 +115,7 @@ The summary keys count Claude and Codex separately. Errors are not included in t
 
 Claude Code and Codex tasks are combined and sorted by the agents' most recent update time. Status does not affect the order, so a newer working task appears before an older task that needs attention. The first five tasks appear on page 1, and the next eight continue on page 2.
 
-Pressing a task key does not remove it. A task leaves the display when its main Claude or Codex task ends, when a Codex task is archived, or when it has not been updated for more than eight hours. After a response completes, the plugin keeps the task in `確認待ち` so you can notice it and return to it.
+A short press on a task key does not remove it. A task leaves the display when its main Claude or Codex task ends, when a Codex task is archived, when it has not been updated for more than eight hours, or when you hold a `確認待ち` task key for at least 0.8 seconds. After a response completes, the plugin keeps the task in `確認待ち` until you return to it or mark it complete with a long press. A later agent update makes the task visible again.
 
 ## Session names
 
@@ -136,7 +137,7 @@ Generic text such as `OK` or `Continue`, local commands, and image notifications
 
 ## What happens when you press a task key
 
-A task key brings the app most likely to contain that session to the foreground.
+A short press on a task key brings the app most likely to contain that session to the foreground. Holding a `確認待ち` task key for at least 0.8 seconds marks that response complete and removes it from the task list. Long-pressing a working task does not remove it.
 
 - Claude Code: walks up the session PID's parent processes to identify the actual `.app`, such as Ghostty or Terminal
 - Codex: uses the recorded origin application and can open supported apps such as Zed, Visual Studio Code, or Chrome

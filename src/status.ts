@@ -266,14 +266,15 @@ export class StatusStore {
     this.acknowledgeSession(selected.sessionId, now);
   }
 
-  acknowledgeSession(sessionId: string, _now = Date.now()): void {
+  acknowledgeSession(sessionId: string, _now = Date.now()): boolean {
     const selected = this.#sessions.get(sessionId);
-    if (!selected || selected.kind === "working") return;
+    if (!selected || selected.kind !== "attention") return false;
     this.#sessions.set(selected.sessionId, {
       ...selected,
       kind: "ready",
       detail: "確認済み"
     });
+    return true;
   }
 
   snapshot(now = Date.now(), agent?: AgentKind): StatusSnapshot {

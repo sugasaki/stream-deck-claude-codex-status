@@ -21,7 +21,7 @@ macOS上のClaude CodeとCodexのタスクをStream Deck Neoへ表示し、ユ�
 - ClaudeとCodexの実タスクは、状態ではなく `updatedAt` の降順で混在表示する。
 - 1ページ目はClaude概要、Codex概要、最新順5タスク、統合利用率の8キーを基本とする。
 - 2ページ目は最終更新日時順の続き8タスクとし、2ページ合計で13タスクを表示する。
-- タスクキーを押すと起動元アプリを前面にし、タスクを確認済み扱いにしたり削除したりしない。
+- タスクキーの短押しは起動元アプリを前面にし、`確認待ち` のキーを0.8秒以上長押しした場合だけ確認済みとして表示対象から外す。
 - 概要キーは表示専用で、押しても状態を変更しない。
 - 返信完了後は、ユーザーが確認できるまで `確認待ち` を維持する。
 - Claude/Codex側でタスク終了またはアーカイブされたものと、8時間以上更新がないものを表示対象から外す。
@@ -39,6 +39,7 @@ macOS上のClaude CodeとCodexのタスクをStream Deck Neoへ表示し、ユ�
 - `src/plugin.ts`: プラグインの起動、アクション登録、タイマー
 - `src/status.ts`: 状態モデル、同期、並べ替え、スナップショット
 - `src/status-action.ts`: Stream Deckの概要・タスクアクション
+- `src/session-press.ts`: タスクキーの短押し・長押し判定
 - `src/render.ts`: 概要・タスクキーのSVG
 - `src/codex-task-monitor.ts`: Codexローカルタスクの監視
 - `src/claude-task-name.ts`: Claudeローカルタイトルの解決

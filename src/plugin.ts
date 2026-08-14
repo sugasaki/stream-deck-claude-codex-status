@@ -58,19 +58,19 @@ const statusActions = [
   new UnifiedStatusAction(store),
   new ClaudeStatusAction(store),
   new CodexStatusAction(store),
-  new Session1Action(store, sessionAppActivator),
-  new Session2Action(store, sessionAppActivator),
-  new Session3Action(store, sessionAppActivator),
-  new Session4Action(store, sessionAppActivator),
-  new Session5Action(store, sessionAppActivator),
-  new Session6Action(store, sessionAppActivator),
-  new Session7Action(store, sessionAppActivator),
-  new Session8Action(store, sessionAppActivator),
-  new Session9Action(store, sessionAppActivator),
-  new Session10Action(store, sessionAppActivator),
-  new Session11Action(store, sessionAppActivator),
-  new Session12Action(store, sessionAppActivator),
-  new Session13Action(store, sessionAppActivator)
+  new Session1Action(store, sessionAppActivator, saveState),
+  new Session2Action(store, sessionAppActivator, saveState),
+  new Session3Action(store, sessionAppActivator, saveState),
+  new Session4Action(store, sessionAppActivator, saveState),
+  new Session5Action(store, sessionAppActivator, saveState),
+  new Session6Action(store, sessionAppActivator, saveState),
+  new Session7Action(store, sessionAppActivator, saveState),
+  new Session8Action(store, sessionAppActivator, saveState),
+  new Session9Action(store, sessionAppActivator, saveState),
+  new Session10Action(store, sessionAppActivator, saveState),
+  new Session11Action(store, sessionAppActivator, saveState),
+  new Session12Action(store, sessionAppActivator, saveState),
+  new Session13Action(store, sessionAppActivator, saveState)
 ];
 const refreshClaudeTaskName = async (sessionId: string, transcriptPath?: string): Promise<void> => {
   try {

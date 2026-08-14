@@ -1,7 +1,7 @@
 {
   "$schema": "https://schemas.elgato.com/streamdeck/plugins/manifest.json",
   "Name": "Claude & Codex Status",
-  "Version": "1.4.0.0",
+  "Version": "1.4.1.0",
   "Author": "atsu",
   "Actions": [
     {
@@ -59,7 +59,7 @@
       "Name": "最新更新タスク",
       "UUID": "com.atsu.claude-code-status.session-1",
       "Icon": "imgs/actions/status/icon",
-      "Tooltip": "最終更新日時が最も新しい実タスクを表示し、押すと起動元アプリを前面にします。",
+      "Tooltip": "最終更新日時が最も新しい実タスクを表示します。短押しで起動元アプリを前面にし、確認待ち中は長押しで完了扱いにします。",
       "Controllers": [
         "Keypad"
       ],
@@ -76,7 +76,7 @@
       "Name": "1つ前の更新タスク",
       "UUID": "com.atsu.claude-code-status.session-2",
       "Icon": "imgs/actions/status/icon",
-      "Tooltip": "最終更新日時順で最新タスクの1つ前を表示し、押すと起動元アプリを前面にします。",
+      "Tooltip": "最終更新日時順で最新タスクの1つ前を表示します。短押しで起動元アプリを前面にし、確認待ち中は長押しで完了扱いにします。",
       "Controllers": [
         "Keypad"
       ],
@@ -91,7 +91,7 @@
       "Name": "2つ前の更新タスク",
       "UUID": "com.atsu.claude-code-status.session-3",
       "Icon": "imgs/actions/status/icon",
-      "Tooltip": "最終更新日時順で最新タスクの2つ前を表示し、押すと起動元アプリを前面にします。",
+      "Tooltip": "最終更新日時順で最新タスクの2つ前を表示します。短押しで起動元アプリを前面にし、確認待ち中は長押しで完了扱いにします。",
       "Controllers": [
         "Keypad"
       ],
@@ -106,7 +106,7 @@
       "Name": "3つ前の更新タスク",
       "UUID": "com.atsu.claude-code-status.session-4",
       "Icon": "imgs/actions/status/icon",
-      "Tooltip": "最終更新日時順で最新タスクの3つ前を表示し、押すと起動元アプリを前面にします。",
+      "Tooltip": "最終更新日時順で最新タスクの3つ前を表示します。短押しで起動元アプリを前面にし、確認待ち中は長押しで完了扱いにします。",
       "Controllers": [
         "Keypad"
       ],
@@ -137,7 +137,7 @@
       "Name": "4つ前の更新タスク",
       "UUID": "com.atsu.claude-code-status.session-5",
       "Icon": "imgs/actions/status/icon",
-      "Tooltip": "最終更新日時順で最新タスクの4つ前を表示し、押すと起動元アプリを前面にします。",
+      "Tooltip": "最終更新日時順で最新タスクの4つ前を表示します。短押しで起動元アプリを前面にし、確認待ち中は長押しで完了扱いにします。",
       "Controllers": [
         "Keypad"
       ],
@@ -152,7 +152,7 @@
       "Name": "5つ前の更新タスク",
       "UUID": "com.atsu.claude-code-status.session-6",
       "Icon": "imgs/actions/status/icon",
-      "Tooltip": "最終更新日時順で最新タスクの5つ前を表示し、押すと起動元アプリを前面にします。",
+      "Tooltip": "最終更新日時順で最新タスクの5つ前を表示します。短押しで起動元アプリを前面にし、確認待ち中は長押しで完了扱いにします。",
       "Controllers": [
         "Keypad"
       ],
@@ -167,7 +167,7 @@
       "Name": "6つ前の更新タスク",
       "UUID": "com.atsu.claude-code-status.session-7",
       "Icon": "imgs/actions/status/icon",
-      "Tooltip": "最終更新日時順で最新タスクの6つ前を表示し、押すと起動元アプリを前面にします。",
+      "Tooltip": "最終更新日時順で最新タスクの6つ前を表示します。短押しで起動元アプリを前面にし、確認待ち中は長押しで完了扱いにします。",
       "Controllers": [
         "Keypad"
       ],
@@ -182,7 +182,7 @@
       "Name": "7つ前の更新タスク",
       "UUID": "com.atsu.claude-code-status.session-8",
       "Icon": "imgs/actions/status/icon",
-      "Tooltip": "最終更新日時順で最新タスクの7つ前を表示し、押すと起動元アプリを前面にします。",
+      "Tooltip": "最終更新日時順で最新タスクの7つ前を表示します。短押しで起動元アプリを前面にし、確認待ち中は長押しで完了扱いにします。",
       "Controllers": [
         "Keypad"
       ],
@@ -197,7 +197,7 @@
       "Name": "8つ前の更新タスク",
       "UUID": "com.atsu.claude-code-status.session-9",
       "Icon": "imgs/actions/status/icon",
-      "Tooltip": "最終更新日時順で最新タスクの8つ前を表示し、押すと起動元アプリを前面にします。",
+      "Tooltip": "最終更新日時順で最新タスクの8つ前を表示します。短押しで起動元アプリを前面にし、確認待ち中は長押しで完了扱いにします。",
       "Controllers": [
         "Keypad"
       ],
@@ -212,7 +212,7 @@
       "Name": "9つ前の更新タスク",
       "UUID": "com.atsu.claude-code-status.session-10",
       "Icon": "imgs/actions/status/icon",
-      "Tooltip": "最終更新日時順で最新タスクの9つ前を表示し、押すと起動元アプリを前面にします。",
+      "Tooltip": "最終更新日時順で最新タスクの9つ前を表示します。短押しで起動元アプリを前面にし、確認待ち中は長押しで完了扱いにします。",
       "Controllers": [
         "Keypad"
       ],
@@ -227,7 +227,7 @@
       "Name": "10件前の更新タスク",
       "UUID": "com.atsu.claude-code-status.session-11",
       "Icon": "imgs/actions/status/icon",
-      "Tooltip": "最終更新日時順で最新タスクの10件前を表示し、押すと起動元アプリを前面にします。",
+      "Tooltip": "最終更新日時順で最新タスクの10件前を表示します。短押しで起動元アプリを前面にし、確認待ち中は長押しで完了扱いにします。",
       "Controllers": [
         "Keypad"
       ],
@@ -242,7 +242,7 @@
       "Name": "11件前の更新タスク",
       "UUID": "com.atsu.claude-code-status.session-12",
       "Icon": "imgs/actions/status/icon",
-      "Tooltip": "最終更新日時順で最新タスクの11件前を表示し、押すと起動元アプリを前面にします。",
+      "Tooltip": "最終更新日時順で最新タスクの11件前を表示します。短押しで起動元アプリを前面にし、確認待ち中は長押しで完了扱いにします。",
       "Controllers": [
         "Keypad"
       ],
@@ -257,7 +257,7 @@
       "Name": "12件前の更新タスク",
       "UUID": "com.atsu.claude-code-status.session-13",
       "Icon": "imgs/actions/status/icon",
-      "Tooltip": "最終更新日時順で最新タスクの12件前を表示し、押すと起動元アプリを前面にします。",
+      "Tooltip": "最終更新日時順で最新タスクの12件前を表示します。短押しで起動元アプリを前面にし、確認待ち中は長押しで完了扱いにします。",
       "Controllers": [
         "Keypad"
       ],

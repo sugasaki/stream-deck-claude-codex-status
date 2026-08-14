@@ -11,6 +11,7 @@ import {
   type ClaudeTranscriptCursor
 } from "../src/claude-task-name";
 import { renderStatus } from "../src/render";
+import { SESSION_LONG_PRESS_MS, SessionPressTracker } from "../src/session-press";
 import {
   applyCodexRolloutLine,
   codexSessionFromThread,
@@ -204,6 +205,60 @@ test("keeps an acknowledged completion dismissed until a newer event", () => {
 
   store.syncAgentSessions("codex", [{ ...completed, kind: "working", updatedAt: 3_000 }]);
   assert.equal(store.snapshot(3_000).kind, "working");
+});
+
+test("treats only a long press on an attention task as completion", () => {
+  const store = new StatusStore();
+  store.applyHook(
+    { hook_event_name: "UserPromptSubmit", session_id: "waiting", prompt: "確認待ちタスク" },
+    1_000,
+    "codex"
+  );
+  store.applyHook({ hook_event_name: "Stop", session_id: "waiting" }, 2_000, "codex");
+  const waiting = store.sessionSnapshot(0, 3_000);
+  const tracker = new SessionPressTracker();
+
+  tracker.begin("short", waiting, 3_000);
+  assert.equal(tracker.finish("short", 3_000 + SESSION_LONG_PRESS_MS - 1)?.type, "activate");
+
+  tracker.begin("long", waiting, 4_000);
+  const completion = tracker.finish("long", 4_000 + SESSION_LONG_PRESS_MS);
+  assert.equal(completion?.type, "complete");
+  assert.equal(completion?.snapshot.sessionId, "codex:waiting");
+});
+
+test("does not complete a working task even when its key is held", () => {
+  const store = new StatusStore();
+  store.applyHook(
+    { hook_event_name: "UserPromptSubmit", session_id: "working", prompt: "作業中タスク" },
+    1_000,
+    "claude"
+  );
+  const tracker = new SessionPressTracker();
+  tracker.begin("working", store.sessionSnapshot(0, 2_000), 2_000);
+
+  assert.equal(tracker.finish("working", 2_000 + SESSION_LONG_PRESS_MS)?.type, "activate");
+  assert.equal(store.acknowledgeSession("claude:working", 3_000), false);
+});
+
+test("acknowledging a waiting task removes it and advances the next slot", () => {
+  const store = new StatusStore();
+  store.applyHook(
+    { hook_event_name: "UserPromptSubmit", session_id: "older", prompt: "次に表示するタスク" },
+    1_000,
+    "claude"
+  );
+  store.applyHook(
+    { hook_event_name: "UserPromptSubmit", session_id: "newer", prompt: "完了にするタスク" },
+    2_000,
+    "codex"
+  );
+  store.applyHook({ hook_event_name: "Stop", session_id: "newer" }, 3_000, "codex");
+
+  assert.equal(store.acknowledgeSession("codex:newer", 4_000), true);
+
+  assert.equal(store.sessionSnapshot(0, 4_000).task, "次に表示するタスク");
+  assert.equal(store.sessionSnapshot(1, 4_000).sessionId, "empty:1");
 });
 
 test("restores recent session state", () => {

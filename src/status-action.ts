@@ -1,21 +1,27 @@
 import {
   action,
   type KeyDownEvent,
+  type KeyUpEvent,
   SingletonAction,
-  type WillAppearEvent
+  type WillAppearEvent,
+  type WillDisappearEvent
 } from "@elgato/streamdeck";
 
 import { renderStatus } from "./render";
+import { SessionPressTracker } from "./session-press";
 import type { SessionAppActivator } from "./session-app";
 import { type AgentKind, StatusStore } from "./status";
 
 abstract class BaseStatusAction extends SingletonAction {
+  readonly #presses = new SessionPressTracker();
+
   constructor(
     private readonly store: StatusStore,
     private readonly agent?: AgentKind,
     private readonly slot?: number,
     private readonly activator?: SessionAppActivator,
-    private readonly summary = false
+    private readonly summary = false,
+    private readonly onChange?: () => void
   ) {
     super();
   }
@@ -24,15 +30,43 @@ abstract class BaseStatusAction extends SingletonAction {
     return ev.action.setImage(renderStatus(this.#snapshot(Date.now())));
   }
 
-  override async onKeyDown(ev: KeyDownEvent): Promise<void> {
+  override onKeyDown(ev: KeyDownEvent): void {
     if (this.summary) return;
-    const snapshot = this.#snapshot(Date.now());
-    if (snapshot.sessionId === "none" || snapshot.sessionId.startsWith("empty:") || !this.activator) {
+    this.#presses.begin(ev.action.id, this.#snapshot(Date.now()));
+  }
+
+  override async onKeyUp(ev: KeyUpEvent): Promise<void> {
+    if (this.summary) return;
+    const result = this.#presses.finish(ev.action.id);
+    if (!result) return;
+
+    const { snapshot } = result;
+    if (snapshot.sessionId === "none" || snapshot.sessionId.startsWith("empty:")) {
+      await ev.action.showAlert();
+      return;
+    }
+
+    if (result.type === "complete") {
+      if (!this.store.acknowledgeSession(snapshot.sessionId)) {
+        await ev.action.showAlert();
+        return;
+      }
+      this.onChange?.();
+      await this.refresh();
+      await ev.action.showOk();
+      return;
+    }
+
+    if (!this.activator) {
       await ev.action.showAlert();
       return;
     }
     if (await this.activator.activate(snapshot)) await ev.action.showOk();
     else await ev.action.showAlert();
+  }
+
+  override onWillDisappear(ev: WillDisappearEvent): void {
+    this.#presses.cancel(ev.action.id);
   }
 
   async refresh(now = Date.now()): Promise<void> {
@@ -71,72 +105,72 @@ export class CodexStatusAction extends BaseStatusAction {
 }
 
 abstract class SessionSlotAction extends BaseStatusAction {
-  constructor(store: StatusStore, slot: number, activator: SessionAppActivator) {
-    super(store, undefined, slot, activator);
+  constructor(store: StatusStore, slot: number, activator: SessionAppActivator, onChange?: () => void) {
+    super(store, undefined, slot, activator, false, onChange);
   }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.session-1" })
 export class Session1Action extends SessionSlotAction {
-  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 0, activator); }
+  constructor(store: StatusStore, activator: SessionAppActivator, onChange?: () => void) { super(store, 0, activator, onChange); }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.session-2" })
 export class Session2Action extends SessionSlotAction {
-  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 1, activator); }
+  constructor(store: StatusStore, activator: SessionAppActivator, onChange?: () => void) { super(store, 1, activator, onChange); }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.session-3" })
 export class Session3Action extends SessionSlotAction {
-  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 2, activator); }
+  constructor(store: StatusStore, activator: SessionAppActivator, onChange?: () => void) { super(store, 2, activator, onChange); }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.session-4" })
 export class Session4Action extends SessionSlotAction {
-  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 3, activator); }
+  constructor(store: StatusStore, activator: SessionAppActivator, onChange?: () => void) { super(store, 3, activator, onChange); }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.session-5" })
 export class Session5Action extends SessionSlotAction {
-  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 4, activator); }
+  constructor(store: StatusStore, activator: SessionAppActivator, onChange?: () => void) { super(store, 4, activator, onChange); }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.session-6" })
 export class Session6Action extends SessionSlotAction {
-  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 5, activator); }
+  constructor(store: StatusStore, activator: SessionAppActivator, onChange?: () => void) { super(store, 5, activator, onChange); }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.session-7" })
 export class Session7Action extends SessionSlotAction {
-  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 6, activator); }
+  constructor(store: StatusStore, activator: SessionAppActivator, onChange?: () => void) { super(store, 6, activator, onChange); }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.session-8" })
 export class Session8Action extends SessionSlotAction {
-  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 7, activator); }
+  constructor(store: StatusStore, activator: SessionAppActivator, onChange?: () => void) { super(store, 7, activator, onChange); }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.session-9" })
 export class Session9Action extends SessionSlotAction {
-  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 8, activator); }
+  constructor(store: StatusStore, activator: SessionAppActivator, onChange?: () => void) { super(store, 8, activator, onChange); }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.session-10" })
 export class Session10Action extends SessionSlotAction {
-  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 9, activator); }
+  constructor(store: StatusStore, activator: SessionAppActivator, onChange?: () => void) { super(store, 9, activator, onChange); }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.session-11" })
 export class Session11Action extends SessionSlotAction {
-  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 10, activator); }
+  constructor(store: StatusStore, activator: SessionAppActivator, onChange?: () => void) { super(store, 10, activator, onChange); }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.session-12" })
 export class Session12Action extends SessionSlotAction {
-  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 11, activator); }
+  constructor(store: StatusStore, activator: SessionAppActivator, onChange?: () => void) { super(store, 11, activator, onChange); }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.session-13" })
 export class Session13Action extends SessionSlotAction {
-  constructor(store: StatusStore, activator: SessionAppActivator) { super(store, 12, activator); }
+  constructor(store: StatusStore, activator: SessionAppActivator, onChange?: () => void) { super(store, 12, activator, onChange); }
 }
