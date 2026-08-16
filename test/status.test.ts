@@ -208,6 +208,50 @@ test("keeps an acknowledged completion dismissed until a newer event", () => {
   assert.equal(store.snapshot(3_000).kind, "working");
 });
 
+test("a short acknowledgment ends only the prominent completion alert", () => {
+  const store = new StatusStore();
+  store.applyHook(
+    { hook_event_name: "UserPromptSubmit", session_id: "one", prompt: "表示を確認するタスク" },
+    1_000,
+    "codex"
+  );
+  store.applyHook({ hook_event_name: "Stop", session_id: "one" }, 2_000, "codex");
+
+  assert.match(decodeURIComponent(renderStatus(store.snapshot(3_000), 3_000)), /data-completion-alert/);
+  assert.equal(store.dismissCompletionAlert("codex:one"), true);
+
+  const normal = store.snapshot(3_000);
+  assert.equal(normal.kind, "attention");
+  assert.equal(normal.completionAlertDismissed, true);
+  const normalImage = decodeURIComponent(renderStatus(normal, 3_000));
+  assert.doesNotMatch(normalImage, /data-completion-alert/);
+  assert.match(normalImage, />確認待ち<\/text>/);
+  assert.equal(store.dismissCompletionAlert("codex:one"), false);
+});
+
+test("keeps the completion alert dismissed until Codex reports a newer event", () => {
+  const store = new StatusStore();
+  const completed = {
+    sessionId: "codex:one",
+    agent: "codex" as const,
+    kind: "attention" as const,
+    attentionReason: "completion" as const,
+    project: "alpha",
+    task: "確認するタスク",
+    detail: "返信を確認してください",
+    startedAt: 1_000,
+    updatedAt: 2_000
+  };
+
+  store.syncAgentSessions("codex", [completed]);
+  store.dismissCompletionAlert("codex:one");
+  store.syncAgentSessions("codex", [completed]);
+  assert.equal(store.snapshot(3_000).completionAlertDismissed, true);
+
+  store.syncAgentSessions("codex", [{ ...completed, updatedAt: 4_000 }]);
+  assert.equal(store.snapshot(4_000).completionAlertDismissed, undefined);
+});
+
 test("treats only a long press on an attention task as completion", () => {
   const store = new StatusStore();
   store.applyHook(
@@ -601,7 +645,7 @@ test("flashes the whole key for a new completion and keeps a strong static alert
 
   const bright = decodeURIComponent(renderStatus(snapshot, 0));
   const dim = decodeURIComponent(renderStatus(snapshot, 500));
-  const persistent = decodeURIComponent(renderStatus(snapshot, 60_000));
+  const persistent = decodeURIComponent(renderStatus(snapshot, 10_000));
 
   assert.match(bright, /fill="#FFD600" stroke="#F0003C" stroke-width="10"/);
   assert.match(bright, /data-completion-alert="true" data-recent="true" data-pulse="true"/);
@@ -625,7 +669,7 @@ test("keeps the actual wait start time in an agent summary", () => {
   assert.equal(summary.attentionReason, "completion");
   assert.match(decodeURIComponent(renderStatus(summary, 6_000)), /data-recent="true"/);
   assert.match(decodeURIComponent(renderStatus(summary, 6_000)), /data-completion-alert="true"/);
-  assert.match(decodeURIComponent(renderStatus(summary, 65_000)), /data-recent="false"/);
+  assert.match(decodeURIComponent(renderStatus(summary, 15_000)), /data-recent="false"/);
 });
 
 test("restores older completion state with the stronger completion alert", () => {

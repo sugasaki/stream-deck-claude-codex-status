@@ -22,7 +22,7 @@ After you send an instruction and switch to another task, the plugin tells you w
 - Shows `作業中` (Working), `完了！` (Complete!), `確認待ち` (Needs attention), and `エラー` (Error) for Claude Code and Codex
 - Combines both agents and displays up to 13 real tasks across two pages, sorted by most recent update
 - Uses renameable Claude and Codex chat titles as session names
-- Flashes the entire key between high-visibility red and yellow for 60 seconds after a response completes, then keeps a strong completion display until you check it
+- Flashes the entire key between high-visibility red and yellow for 10 seconds after a response completes, then keeps a strong completion display until you check it
 - Animates a large working indicator at five frames per second
 - Brings the app that started a task to the foreground when its key is pressed
 - Removes a task waiting for confirmation when its key is held for at least 0.8 seconds
@@ -149,7 +149,7 @@ Generic text such as `OK` or `Continue`, local commands, and image notifications
 
 ## What happens when you press a task key
 
-A short press on a task key brings the app most likely to contain that session to the foreground. Holding a `確認待ち` task key for at least 0.8 seconds marks that response complete and removes it from the task list. Long-pressing a working task does not remove it.
+A short press on a task key returns the prominent completion alert to the normal `確認待ち` display, keeps the task in the list, and brings the app most likely to contain that session to the foreground. Holding a `確認待ち` task key for at least 0.8 seconds marks that response complete and removes it from the task list. Long-pressing a working task does not remove it.
 
 - Claude Code: walks up the session PID's parent processes to identify the actual `.app`, such as Ghostty or Terminal
 - Codex: uses the recorded origin application and can open supported apps such as Zed, Visual Studio Code, or Chrome

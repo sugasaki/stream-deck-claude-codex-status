@@ -24,7 +24,7 @@ const WORKING_TEXT_COLOR = "#69E6A6";
 const COMPLETION_BACKGROUND = "#F0003C";
 const COMPLETION_PULSE_BACKGROUND = "#FFD600";
 const COMPLETION_DARK_TEXT = "#17120A";
-const COMPLETION_PULSE_MS = 60_000;
+const COMPLETION_PULSE_MS = 10_000;
 
 function escapeXml(value: string): string {
   return value.replace(/[<>&"']/g, (character) => {
@@ -140,7 +140,10 @@ export function renderStatus(snapshot: StatusSnapshot, now = Date.now()): string
   const isUnifiedSummary = snapshot.sessionId === "summary:all";
   const isEmpty = snapshot.sessionId.startsWith("empty:");
   const hasSession = snapshot.sessionId !== "none" && !snapshot.sessionId.startsWith("empty:");
-  const isCompletion = snapshot.kind === "attention" && snapshot.attentionReason === "completion";
+  const isCompletion =
+    snapshot.kind === "attention" &&
+    snapshot.attentionReason === "completion" &&
+    !snapshot.completionAlertDismissed;
   const isRecentCompletion = isCompletion && now >= snapshot.updatedAt && now - snapshot.updatedAt < COMPLETION_PULSE_MS;
   const completionPulse = isRecentCompletion && Math.floor(now / 500) % 2 === 0;
   const completionForeground = completionPulse ? COMPLETION_DARK_TEXT : TEXT_COLOR;

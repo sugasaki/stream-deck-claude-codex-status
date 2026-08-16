@@ -22,6 +22,7 @@ export interface SessionStatus {
   agent: AgentKind;
   originator?: string;
   attentionReason?: AttentionReason;
+  completionAlertDismissed?: boolean;
   kind: StatusKind;
   project: string;
   task: string;
@@ -139,16 +140,25 @@ export class StatusStore {
         previous.kind === "ready" &&
         session.kind === "attention" &&
         previous.updatedAt >= session.updatedAt;
+      const preserveDismissedAlert =
+        previous?.agent === agent &&
+        previous.attentionReason === "completion" &&
+        previous.completionAlertDismissed === true &&
+        session.attentionReason === "completion" &&
+        previous.updatedAt >= session.updatedAt;
       const next = acknowledged
         ? {
             ...session,
             kind: "ready" as const,
             detail: "確認済み",
             attentionReason: undefined,
+            completionAlertDismissed: undefined,
             startedAt: previous.startedAt,
             updatedAt: previous.updatedAt
           }
-        : session;
+        : preserveDismissedAlert
+          ? { ...session, completionAlertDismissed: true }
+          : session;
       if (JSON.stringify(previous) !== JSON.stringify(next)) {
         this.#sessions.set(session.sessionId, next);
         changed = true;
@@ -171,7 +181,9 @@ export class StatusStore {
         typeof session.updatedAt !== "number" ||
         (session.originator !== undefined && typeof session.originator !== "string") ||
         (session.attentionReason !== undefined &&
-          !["completion", "input", "permission"].includes(session.attentionReason))
+          !["completion", "input", "permission"].includes(session.attentionReason)) ||
+        (session.completionAlertDismissed !== undefined &&
+          typeof session.completionAlertDismissed !== "boolean")
       ) {
         continue;
       }
@@ -292,8 +304,23 @@ export class StatusStore {
       ...selected,
       kind: "ready",
       detail: "確認済み",
-      attentionReason: undefined
+      attentionReason: undefined,
+      completionAlertDismissed: undefined
     });
+    return true;
+  }
+
+  dismissCompletionAlert(sessionId: string): boolean {
+    const selected = this.#sessions.get(sessionId);
+    if (
+      !selected ||
+      selected.kind !== "attention" ||
+      selected.attentionReason !== "completion" ||
+      selected.completionAlertDismissed
+    ) {
+      return false;
+    }
+    this.#sessions.set(sessionId, { ...selected, completionAlertDismissed: true });
     return true;
   }
 
@@ -351,9 +378,13 @@ export class StatusStore {
     const latestAttentionAt = active
       .filter((session) => session.kind === "attention")
       .reduce((latest, session) => Math.max(latest, session.updatedAt), 0);
-    const latestAttention = active
+    const attentionSessions = active
       .filter((session) => session.kind === "attention")
-      .sort((left, right) => right.updatedAt - left.updatedAt)[0];
+      .sort((left, right) => right.updatedAt - left.updatedAt);
+    const latestAttention = attentionSessions[0];
+    const latestUnseenCompletion = attentionSessions.find(
+      (session) => session.attentionReason === "completion" && !session.completionAlertDismissed
+    );
 
     return {
       sessionId: `summary:${agent ?? "all"}`,
@@ -363,12 +394,12 @@ export class StatusStore {
       task: `作業中 ${counts.working}`,
       detail: `${active.length}件を監視中`,
       startedAt: now,
-      updatedAt: latestAttentionAt || now,
+      updatedAt: latestUnseenCompletion?.updatedAt ?? (latestAttentionAt || now),
       scope: agent ?? "all",
       label: `確認待ち ${counts.attention}`,
       activeSessions: active.length,
       elapsedMs: 0,
-      attentionReason: latestAttention?.attentionReason
+      attentionReason: latestUnseenCompletion ? "completion" : latestAttention?.attentionReason
     };
   }
 
