@@ -166,7 +166,7 @@ export function renderStatus(snapshot: StatusSnapshot, now = Date.now()): string
       ? WORKING_TEXT_COLOR
       : TEXT_COLOR;
   const [nameLine1, nameLine2, nameLine3] = sessionNameLines(snapshot.task).map(escapeXml) as [string, string, string];
-  const time = isSummary || isEmpty
+  const time = isEmpty
     ? ""
     : updatedAgo(Math.max(0, now - snapshot.updatedAt));
 
@@ -198,15 +198,17 @@ export function renderStatus(snapshot: StatusSnapshot, now = Date.now()): string
     ? `${header}
   ${completionIndicator(27, 56, completionAccent, completionForeground)}
   <text x="89" y="64" text-anchor="middle" fill="${completionForeground}" font-size="24" font-weight="900" font-family="Arial,sans-serif">完了あり</text>
-  <text x="72" y="99" text-anchor="middle" fill="${completionForeground}" font-size="18" font-weight="900" font-family="Arial,sans-serif">${statusLabel}</text>
-  <text x="72" y="126" text-anchor="middle" fill="${completionForeground}" font-size="18" font-weight="900" font-family="Arial,sans-serif">${nameLine1}</text>`
+  <text x="72" y="91" text-anchor="middle" fill="${completionForeground}" font-size="16" font-weight="900" font-family="Arial,sans-serif">${statusLabel}</text>
+  <text x="72" y="112" text-anchor="middle" fill="${completionForeground}" font-size="15" font-weight="900" font-family="Arial,sans-serif">${nameLine1}</text>
+  <text data-updated-time="true" x="72" y="134" text-anchor="middle" fill="${completionForeground}" font-size="13" font-weight="800" font-family="Arial,sans-serif">${escapeXml(time)}</text>`
     : isCompletion
       ? `${header}
   ${indicator}
   <text x="91" y="53" text-anchor="middle" fill="${completionForeground}" font-size="26" font-weight="900" letter-spacing="1" font-family="Arial,sans-serif">完了！</text>
-  <text x="72" y="82" text-anchor="middle" fill="${completionForeground}" font-size="16" font-weight="900" font-family="Arial,sans-serif">${nameLine1}</text>
-  <text x="72" y="104" text-anchor="middle" fill="${completionForeground}" font-size="16" font-weight="900" font-family="Arial,sans-serif">${nameLine2}</text>
-  <text x="72" y="126" text-anchor="middle" fill="${completionForeground}" font-size="16" font-weight="900" font-family="Arial,sans-serif">${nameLine3}</text>`
+  <text x="72" y="78" text-anchor="middle" fill="${completionForeground}" font-size="14" font-weight="900" font-family="Arial,sans-serif">${nameLine1}</text>
+  <text x="72" y="96" text-anchor="middle" fill="${completionForeground}" font-size="14" font-weight="900" font-family="Arial,sans-serif">${nameLine2}</text>
+  <text x="72" y="114" text-anchor="middle" fill="${completionForeground}" font-size="14" font-weight="900" font-family="Arial,sans-serif">${nameLine3}</text>
+  <text data-updated-time="true" x="72" y="134" text-anchor="middle" fill="${completionForeground}" font-size="13" font-weight="800" font-family="Arial,sans-serif">${escapeXml(time)}</text>`
     : isSummary
     ? `${header}
   ${summaryAttentionIndicator}

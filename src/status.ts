@@ -260,6 +260,13 @@ export class StatusStore {
         break;
       case "Notification": {
         const type = asString(payload.notification_type);
+        if (
+          type === "idle_prompt" &&
+          previous?.kind === "attention" &&
+          previous.attentionReason === "completion"
+        ) {
+          return false;
+        }
         if (type === "auth_success") {
           current.kind = "ready";
           current.detail = "認証完了";
