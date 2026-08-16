@@ -14,6 +14,20 @@ macOS上のClaude CodeとCodexのタスクをStream Deck Neoへ表示し、ユ�
 4. `dist/`、`node_modules/`、`com.atsu.claude-code-status.sdPlugin/bin/` は生成物なので直接編集しない。
 5. 調査と実装を分け、外部仕様を参照した場合は一次ソースを優先する。
 
+## GitHub workflow
+
+- すべての変更は、実装前に目的と完了条件を記載したGitHub Issueを作成し、そのIssueに対応するPull Requestで反映する。IssueなしのPR、PRなしの変更を作らない。
+- 作業はIssueごとの専用ブランチで行い、`main`へ直接pushしない。ブランチ保護やRequired checksを迂回しない。
+- IssueとPull Requestのタイトル・本文は、オーナーから別の指定がない限り日本語で記載し、Pull Requestから対応Issueを参照する。
+- 通常の低リスク変更は、差分、テスト結果、CI、競合の有無を確認し、問題がなければエージェントが必要性を判断してマージしてよい。マージ後はPull Request、関連Issue、remoteの`main`を再確認する。
+- クリティカルな変更は、検証が成功していてもマージ前にリポジトリオーナーへ影響とリスクを説明し、明示的な承認を得る。判断に迷う場合はクリティカルとして扱う。
+- クリティカルな変更には、少なくとも次を含む。
+  - リリース、公開配布、バージョンタグの作成
+  - 認証、認可、権限、Secret、Cookie、個人情報、セキュリティ境界に関する変更
+  - データ消失、互換性破壊、設定の上書き、移行失敗、復旧困難につながる変更
+  - 課金、外部公開、本番環境、配布済みプラグインへ直接影響する変更
+  - ブランチ保護、GitHub Rules、CIの必須条件を弱める変更
+
 ## Product invariants
 
 変更時は次を維持してください。
@@ -98,7 +112,7 @@ npm run preview
 - `package-lock.json`: `x.y.z`
 - `com.atsu.claude-code-status.sdPlugin/manifest.json`: `x.y.z.0`
 
-リリースはユーザーが依頼または承認した場合だけ行います。現在のリポジトリ運用では、検証済み変更を`main`へコミットし、annotated tag `vx.y.z` を作成してpushします。タグは既存コミットから移動・上書きしません。
+リリースはユーザーが依頼または承認した場合だけ行います。現在のリポジトリ運用では、検証済み変更をPull Requestで`main`へマージし、`main`上の対象コミットへannotated tag `vx.y.z` を作成してpushします。タグは既存コミットから移動・上書きしません。
 
 コミット前に対象ファイルだけをstageし、無関係な変更を含めないでください。push後はremoteの`main`、タグのdereference先、clean worktreeを再確認します。
 
