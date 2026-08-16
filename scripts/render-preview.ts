@@ -54,9 +54,10 @@ const snapshots: StatusSnapshot[] = [
     sessionId: "claude:previous-1",
     agent: "claude",
     kind: "attention",
+    attentionReason: "completion",
     project: "api-server",
-    task: "本番デプロイの許可",
-    detail: "許可: コマンド実行",
+    task: "本番デプロイが完了",
+    detail: "返信を確認してください",
     updatedAt: now - 2 * 60_000
   },
   {

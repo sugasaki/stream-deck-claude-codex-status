@@ -55,6 +55,7 @@ test("turn completion becomes a named Codex confirmation wait", () => {
   assert.equal(session?.kind, "attention");
   assert.equal(session?.task, "Stream Deck 状態表示");
   assert.equal(session?.detail, "返信を確認してください");
+  assert.equal(session?.attentionReason, "completion");
   assert.equal(session?.originator, "codex_work_desktop");
 });
 
@@ -555,7 +556,7 @@ test("advances a large working indicator every 200 milliseconds", () => {
   assert.notEqual(first, second);
 });
 
-test("pulses a new confirmation marker and then leaves it static", () => {
+test("keeps a non-completion confirmation marker distinct from the completion alert", () => {
   const snapshot = {
     sessionId: "claude:waiting",
     agent: "claude" as const,
@@ -579,6 +580,36 @@ test("pulses a new confirmation marker and then leaves it static", () => {
   assert.match(dim, /r="6\.3" fill="#FF3355" opacity="0\.12"/);
   assert.match(staticMarker, /data-recent="false" data-pulse="false"/);
   assert.match(staticMarker, /r="6\.3" fill="#FF3355" opacity="1"/);
+  assert.doesNotMatch(bright, /data-completion-alert/);
+});
+
+test("flashes the whole key for a new completion and keeps a strong static alert", () => {
+  const snapshot = {
+    sessionId: "codex:completed",
+    agent: "codex" as const,
+    kind: "attention" as const,
+    attentionReason: "completion" as const,
+    project: "status-plugin",
+    task: "完了通知を目立たせる",
+    detail: "返信を確認してください",
+    startedAt: 0,
+    updatedAt: 0,
+    scope: "all" as const,
+    activeSessions: 1,
+    elapsedMs: 0
+  };
+
+  const bright = decodeURIComponent(renderStatus(snapshot, 0));
+  const dim = decodeURIComponent(renderStatus(snapshot, 500));
+  const persistent = decodeURIComponent(renderStatus(snapshot, 30_000));
+
+  assert.match(bright, /fill="#610018" stroke="#FF3355" stroke-width="9"/);
+  assert.match(bright, /data-completion-alert="true" data-recent="true" data-pulse="true"/);
+  assert.match(bright, /data-indicator="completion"/);
+  assert.match(bright, />完了！<\/text>/);
+  assert.match(dim, /fill="#210710" stroke="#FF3355" stroke-width="6"/);
+  assert.match(persistent, /data-completion-alert="true" data-recent="false" data-pulse="false"/);
+  assert.match(persistent, /fill="#210710" stroke="#FF3355" stroke-width="6"/);
 });
 
 test("keeps the actual wait start time in an agent summary", () => {
@@ -588,8 +619,26 @@ test("keeps the actual wait start time in an agent summary", () => {
 
   const summary = store.summarySnapshot(6_000, "claude");
   assert.equal(summary.updatedAt, 5_000);
+  assert.equal(summary.attentionReason, "completion");
   assert.match(decodeURIComponent(renderStatus(summary, 6_000)), /data-recent="true"/);
+  assert.match(decodeURIComponent(renderStatus(summary, 6_000)), /data-completion-alert="true"/);
   assert.match(decodeURIComponent(renderStatus(summary, 15_000)), /data-recent="false"/);
+});
+
+test("restores older completion state with the stronger completion alert", () => {
+  const store = new StatusStore();
+  store.restore([{
+    sessionId: "claude:legacy-completion",
+    agent: "claude",
+    kind: "attention",
+    project: "status-plugin",
+    task: "以前の完了タスク",
+    detail: "返信を確認してください",
+    startedAt: 1_000,
+    updatedAt: 2_000
+  }], 3_000);
+
+  assert.equal(store.snapshot(3_000).attentionReason, "completion");
 });
 
 test("keeps the current Claude chat title readable without truncation", () => {

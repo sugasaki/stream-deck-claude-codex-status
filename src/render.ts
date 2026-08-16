@@ -21,6 +21,9 @@ const TEXT_COLOR = "#FFFFFF";
 const ATTENTION_COLOR = "#FF3355";
 const ATTENTION_TEXT_COLOR = "#00E5FF";
 const WORKING_TEXT_COLOR = "#69E6A6";
+const COMPLETION_BACKGROUND = "#210710";
+const COMPLETION_PULSE_BACKGROUND = "#610018";
+const COMPLETION_PULSE_MS = 30_000;
 
 function escapeXml(value: string): string {
   return value.replace(/[<>&"']/g, (character) => {
@@ -115,6 +118,10 @@ function errorIndicator(x: number, y: number): string {
   return `<path data-indicator="error" d="M${x} ${y - 7}L${x + 7} ${y}L${x} ${y + 7}L${x - 7} ${y}Z" fill="${ATTENTION_COLOR}"/>`;
 }
 
+function completionIndicator(x: number, y: number): string {
+  return `<g data-indicator="completion"><circle cx="${x}" cy="${y}" r="12" fill="${ATTENTION_COLOR}"/><path d="M${x - 5} ${y}l3.5 3.5L${x + 6} ${y - 6}" fill="none" stroke="${TEXT_COLOR}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+}
+
 function statusIndicator(snapshot: StatusSnapshot, now: number, color: string, x: number, y: number): string {
   if (snapshot.kind === "working") return workingIndicator(color, now, x, y);
   if (snapshot.kind === "attention") return attentionIndicator(now, snapshot.updatedAt, x, y);
@@ -132,6 +139,9 @@ export function renderStatus(snapshot: StatusSnapshot, now = Date.now()): string
   const isUnifiedSummary = snapshot.sessionId === "summary:all";
   const isEmpty = snapshot.sessionId.startsWith("empty:");
   const hasSession = snapshot.sessionId !== "none" && !snapshot.sessionId.startsWith("empty:");
+  const isCompletion = snapshot.kind === "attention" && snapshot.attentionReason === "completion";
+  const isRecentCompletion = isCompletion && now >= snapshot.updatedAt && now - snapshot.updatedAt < COMPLETION_PULSE_MS;
+  const completionPulse = isRecentCompletion && Math.floor(now / 500) % 2 === 0;
   const showAgent = snapshot.scope !== "all" || hasSession;
   const brand = isUnifiedSummary
     ? "AI AGENTS"
@@ -143,7 +153,7 @@ export function renderStatus(snapshot: StatusSnapshot, now = Date.now()): string
   const backgroundLogo = showAgent && !isUnifiedSummary
     ? `<g data-background-logo="${snapshot.agent}" opacity="${backgroundLogoOpacity}">${renderAgentIcon(snapshot.agent, theme.border, 64, 66, 76)}</g>`
     : "";
-  const statusLabel = escapeXml(snapshot.label ?? STATUS_LABELS[snapshot.kind]);
+  const statusLabel = escapeXml(isCompletion && !isSummary ? "完了！" : snapshot.label ?? STATUS_LABELS[snapshot.kind]);
   const statusTextColor = snapshot.kind === "attention"
     ? ATTENTION_TEXT_COLOR
     : snapshot.kind === "working"
@@ -171,7 +181,9 @@ export function renderStatus(snapshot: StatusSnapshot, now = Date.now()): string
     ? workingIndicator(theme.border, now, 28, 101)
     : `<circle cx="28" cy="101" r="6.5" fill="none" stroke="${theme.border}" stroke-width="2.5" opacity="0.35"/>`;
 
-  const indicator = statusIndicator(snapshot, now, theme.border, 30, 39);
+  const indicator = isCompletion && !isSummary
+    ? completionIndicator(30, 39)
+    : statusIndicator(snapshot, now, theme.border, 30, 39);
   const statusX = indicator ? 84 : 72;
   const content = isSummary
     ? `${header}
@@ -188,9 +200,16 @@ export function renderStatus(snapshot: StatusSnapshot, now = Date.now()): string
   <rect x="24" y="117" width="96" height="22" rx="11" fill="${BACKGROUND_COLOR}" opacity="0.86"/>
   <text x="72" y="134" text-anchor="middle" fill="${TEXT_COLOR}" font-size="14" font-weight="700" font-family="Arial,sans-serif">${escapeXml(time)}</text>`;
 
+  const keyBackground = completionPulse ? COMPLETION_PULSE_BACKGROUND : isCompletion ? COMPLETION_BACKGROUND : BACKGROUND_COLOR;
+  const keyBorder = isCompletion ? ATTENTION_COLOR : theme.border;
+  const keyBorderWidth = completionPulse ? 9 : isCompletion ? 6 : 3.5;
+  const completionAlert = isCompletion
+    ? `<rect data-completion-alert="true" data-recent="${isRecentCompletion}" data-pulse="${completionPulse}" x="7" y="7" width="130" height="130" rx="15" fill="none" stroke="${ATTENTION_COLOR}" stroke-width="2" opacity="0.72"/>`
+    : "";
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">
-  <rect x="2" y="2" width="140" height="140" rx="20" fill="${BACKGROUND_COLOR}" stroke="${theme.border}" stroke-width="3.5"/>
-  <rect x="6" y="6" width="132" height="132" rx="16" fill="none" stroke="${theme.border}" stroke-width="1" opacity="0.24"/>
+  <rect x="2" y="2" width="140" height="140" rx="20" fill="${keyBackground}" stroke="${keyBorder}" stroke-width="${keyBorderWidth}"/>
+  ${completionAlert}
+  <rect x="6" y="6" width="132" height="132" rx="16" fill="none" stroke="${isCompletion ? ATTENTION_COLOR : theme.border}" stroke-width="1" opacity="${isCompletion ? 0.58 : 0.24}"/>
   ${backgroundLogo}
   ${content}
 </svg>`;

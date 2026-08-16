@@ -2,6 +2,7 @@ import path from "node:path";
 
 export type StatusKind = "offline" | "ready" | "working" | "attention" | "done" | "error";
 export type AgentKind = "claude" | "codex";
+export type AttentionReason = "completion" | "input" | "permission";
 
 export const DISPLAY_SESSION_COUNT = 13;
 
@@ -20,6 +21,7 @@ export interface SessionStatus {
   sessionId: string;
   agent: AgentKind;
   originator?: string;
+  attentionReason?: AttentionReason;
   kind: StatusKind;
   project: string;
   task: string;
@@ -138,7 +140,14 @@ export class StatusStore {
         session.kind === "attention" &&
         previous.updatedAt >= session.updatedAt;
       const next = acknowledged
-        ? { ...session, kind: "ready" as const, detail: "確認済み", startedAt: previous.startedAt, updatedAt: previous.updatedAt }
+        ? {
+            ...session,
+            kind: "ready" as const,
+            detail: "確認済み",
+            attentionReason: undefined,
+            startedAt: previous.startedAt,
+            updatedAt: previous.updatedAt
+          }
         : session;
       if (JSON.stringify(previous) !== JSON.stringify(next)) {
         this.#sessions.set(session.sessionId, next);
@@ -160,11 +169,17 @@ export class StatusStore {
         typeof session.detail !== "string" ||
         typeof session.startedAt !== "number" ||
         typeof session.updatedAt !== "number" ||
-        (session.originator !== undefined && typeof session.originator !== "string")
+        (session.originator !== undefined && typeof session.originator !== "string") ||
+        (session.attentionReason !== undefined &&
+          !["completion", "input", "permission"].includes(session.attentionReason))
       ) {
         continue;
       }
-      this.#sessions.set(session.sessionId, session);
+      const attentionReason = session.kind === "attention" && session.attentionReason === undefined &&
+          ["返信を確認してください", "回答してください"].includes(session.detail)
+        ? "completion" as const
+        : session.attentionReason;
+      this.#sessions.set(session.sessionId, { ...session, attentionReason });
     }
     this.#expire(now);
   }
@@ -216,10 +231,12 @@ export class StatusStore {
       case "PreToolUse":
         current.kind = isInputTool(payload.tool_name) ? "attention" : "working";
         current.detail = isInputTool(payload.tool_name) ? "回答待ち" : toolLabel(payload.tool_name);
+        current.attentionReason = isInputTool(payload.tool_name) ? "input" : undefined;
         break;
       case "PermissionRequest":
         current.kind = "attention";
         current.detail = `許可: ${toolLabel(payload.tool_name)}`;
+        current.attentionReason = "permission";
         break;
       case "PostToolUse":
         current.kind = "working";
@@ -237,12 +254,14 @@ export class StatusStore {
         } else {
           current.kind = "attention";
           current.detail = type === "permission_prompt" ? "許可待ち" : "入力待ち";
+          current.attentionReason = type === "permission_prompt" ? "permission" : "input";
         }
         break;
       }
       case "Stop":
         current.kind = "attention";
         current.detail = asksForAnswer(payload.last_assistant_message) ? "回答してください" : "返信を確認してください";
+        current.attentionReason = "completion";
         break;
       case "StopFailure":
         current.kind = "error";
@@ -272,7 +291,8 @@ export class StatusStore {
     this.#sessions.set(selected.sessionId, {
       ...selected,
       kind: "ready",
-      detail: "確認済み"
+      detail: "確認済み",
+      attentionReason: undefined
     });
     return true;
   }
@@ -331,6 +351,9 @@ export class StatusStore {
     const latestAttentionAt = active
       .filter((session) => session.kind === "attention")
       .reduce((latest, session) => Math.max(latest, session.updatedAt), 0);
+    const latestAttention = active
+      .filter((session) => session.kind === "attention")
+      .sort((left, right) => right.updatedAt - left.updatedAt)[0];
 
     return {
       sessionId: `summary:${agent ?? "all"}`,
@@ -344,7 +367,8 @@ export class StatusStore {
       scope: agent ?? "all",
       label: `確認待ち ${counts.attention}`,
       activeSessions: active.length,
-      elapsedMs: 0
+      elapsedMs: 0,
+      attentionReason: latestAttention?.attentionReason
     };
   }
 
