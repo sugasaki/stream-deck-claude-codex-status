@@ -391,6 +391,29 @@ test("tracks a prompt, tool use, and confirmation wait", () => {
   assert.equal(waiting.elapsedMs, 9_000);
 });
 
+test("keeps Claude completion when a later idle prompt notification arrives", () => {
+  const store = new StatusStore();
+  store.applyHook({ hook_event_name: "UserPromptSubmit", session_id: "one" }, 1_000, "claude");
+  store.applyHook({ hook_event_name: "Stop", session_id: "one" }, 2_000, "claude");
+
+  assert.equal(
+    store.applyHook(
+      { hook_event_name: "Notification", session_id: "one", notification_type: "idle_prompt" },
+      32_000,
+      "claude"
+    ),
+    false
+  );
+
+  const completion = store.snapshot(32_000, "claude");
+  assert.equal(completion.kind, "attention");
+  assert.equal(completion.attentionReason, "completion");
+  assert.equal(completion.updatedAt, 2_000);
+  const image = decodeURIComponent(renderStatus(completion, 32_000));
+  assert.match(image, /data-completion-alert="true" data-recent="false"/);
+  assert.match(image, /data-updated-time="true"[^>]*>更新 30秒前<\/text>/);
+});
+
 test("shows a permission request ahead of another working session", () => {
   const store = new StatusStore();
   store.applyHook({ hook_event_name: "UserPromptSubmit", session_id: "one", cwd: "/tmp/alpha" }, 1_000);
@@ -709,6 +732,7 @@ test("flashes the whole key for a new completion and keeps a strong static alert
   assert.match(dim, /fill="#F0003C" stroke="#FFD600" stroke-width="10"/);
   assert.match(persistent, /data-completion-alert="true" data-recent="false" data-pulse="false"/);
   assert.match(persistent, /fill="#F0003C" stroke="#FFD600" stroke-width="10"/);
+  assert.match(persistent, /data-updated-time="true"[^>]*>更新 10秒前<\/text>/);
 });
 
 test("keeps the actual wait start time in an agent summary", () => {
@@ -721,7 +745,9 @@ test("keeps the actual wait start time in an agent summary", () => {
   assert.equal(summary.attentionReason, "completion");
   assert.match(decodeURIComponent(renderStatus(summary, 6_000)), /data-recent="true"/);
   assert.match(decodeURIComponent(renderStatus(summary, 6_000)), /data-completion-alert="true"/);
-  assert.match(decodeURIComponent(renderStatus(summary, 15_000)), /data-recent="false"/);
+  const persistent = decodeURIComponent(renderStatus(summary, 15_000));
+  assert.match(persistent, /data-recent="false"/);
+  assert.match(persistent, /data-updated-time="true"[^>]*>更新 10秒前<\/text>/);
 });
 
 test("restores older completion state with the stronger completion alert", () => {
