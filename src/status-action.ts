@@ -36,7 +36,13 @@ abstract class BaseStatusAction extends SingletonAction {
   }
 
   override async onKeyUp(ev: KeyUpEvent): Promise<void> {
-    if (this.summary) return;
+    if (this.summary) {
+      if (!this.store.dismissCompletionAlerts(this.agent)) return;
+      this.onChange?.();
+      await this.refresh();
+      await ev.action.showOk();
+      return;
+    }
     const result = this.#presses.finish(ev.action.id);
     if (!result) return;
 
@@ -89,22 +95,22 @@ abstract class BaseStatusAction extends SingletonAction {
 
 @action({ UUID: "com.atsu.claude-code-status.status" })
 export class UnifiedStatusAction extends BaseStatusAction {
-  constructor(store: StatusStore) {
-    super(store, undefined, undefined, undefined, true);
+  constructor(store: StatusStore, onChange?: () => void) {
+    super(store, undefined, undefined, undefined, true, onChange);
   }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.claude" })
 export class ClaudeStatusAction extends BaseStatusAction {
-  constructor(store: StatusStore) {
-    super(store, "claude", undefined, undefined, true);
+  constructor(store: StatusStore, onChange?: () => void) {
+    super(store, "claude", undefined, undefined, true, onChange);
   }
 }
 
 @action({ UUID: "com.atsu.claude-code-status.codex" })
 export class CodexStatusAction extends BaseStatusAction {
-  constructor(store: StatusStore) {
-    super(store, "codex", undefined, undefined, true);
+  constructor(store: StatusStore, onChange?: () => void) {
+    super(store, "codex", undefined, undefined, true, onChange);
   }
 }
 

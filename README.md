@@ -156,7 +156,7 @@ A short press on a task key returns the prominent completion alert to the normal
 - Codex desktop: opens the exact ChatGPT task through `codex://threads/<task-id>`
 - Fallback: opens the Claude app for Claude sessions or the ChatGPT app for Codex sessions
 
-Pressing a summary key does not change any state. Pressing the usage key redraws it immediately.
+Pressing the Claude or Codex summary key once returns that agent's prominent completion alerts to the normal display. The unified summary key applies to both agents. Tasks stay in the list and remain in the normal `確認待ち` state. Pressing the usage key redraws it immediately.
 
 ## Usage display
 

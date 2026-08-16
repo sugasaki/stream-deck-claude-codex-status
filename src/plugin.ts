@@ -55,9 +55,9 @@ try {
 }
 
 const statusActions = [
-  new UnifiedStatusAction(store),
-  new ClaudeStatusAction(store),
-  new CodexStatusAction(store),
+  new UnifiedStatusAction(store, saveState),
+  new ClaudeStatusAction(store, saveState),
+  new CodexStatusAction(store, saveState),
   new Session1Action(store, sessionAppActivator, saveState),
   new Session2Action(store, sessionAppActivator, saveState),
   new Session3Action(store, sessionAppActivator, saveState),

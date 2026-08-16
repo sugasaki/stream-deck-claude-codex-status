@@ -324,6 +324,22 @@ export class StatusStore {
     return true;
   }
 
+  dismissCompletionAlerts(agent?: AgentKind): boolean {
+    let changed = false;
+    for (const session of this.#sessions.values()) {
+      if (
+        (agent === undefined || session.agent === agent) &&
+        session.kind === "attention" &&
+        session.attentionReason === "completion" &&
+        !session.completionAlertDismissed
+      ) {
+        this.#sessions.set(session.sessionId, { ...session, completionAlertDismissed: true });
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
   snapshot(now = Date.now(), agent?: AgentKind): StatusSnapshot {
     this.#expire(now);
     const selected = this.#select(now, agent);
@@ -381,9 +397,11 @@ export class StatusStore {
     const attentionSessions = active
       .filter((session) => session.kind === "attention")
       .sort((left, right) => right.updatedAt - left.updatedAt);
-    const latestAttention = attentionSessions[0];
     const latestUnseenCompletion = attentionSessions.find(
       (session) => session.attentionReason === "completion" && !session.completionAlertDismissed
+    );
+    const latestNonCompletionAttention = attentionSessions.find(
+      (session) => session.attentionReason !== "completion"
     );
 
     return {
@@ -399,7 +417,7 @@ export class StatusStore {
       label: `確認待ち ${counts.attention}`,
       activeSessions: active.length,
       elapsedMs: 0,
-      attentionReason: latestUnseenCompletion ? "completion" : latestAttention?.attentionReason
+      attentionReason: latestUnseenCompletion ? "completion" : latestNonCompletionAttention?.attentionReason
     };
   }
 

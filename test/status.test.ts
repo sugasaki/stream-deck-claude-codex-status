@@ -252,6 +252,41 @@ test("keeps the completion alert dismissed until Codex reports a newer event", (
   assert.equal(store.snapshot(4_000).completionAlertDismissed, undefined);
 });
 
+test("summary acknowledgment dismisses completion alerts only in its agent scope", () => {
+  const store = new StatusStore();
+  store.applyHook(
+    { hook_event_name: "UserPromptSubmit", session_id: "claude-one", prompt: "Claudeタスク" },
+    1_000,
+    "claude"
+  );
+  store.applyHook({ hook_event_name: "Stop", session_id: "claude-one" }, 2_000, "claude");
+  store.applyHook(
+    { hook_event_name: "UserPromptSubmit", session_id: "codex-one", prompt: "Codexタスク" },
+    3_000,
+    "codex"
+  );
+  store.applyHook({ hook_event_name: "Stop", session_id: "codex-one" }, 4_000, "codex");
+
+  assert.equal(store.summarySnapshot(5_000, "claude").attentionReason, "completion");
+  assert.equal(store.summarySnapshot(5_000, "codex").attentionReason, "completion");
+  assert.equal(store.dismissCompletionAlerts("claude"), true);
+
+  const claudeSummary = store.summarySnapshot(5_000, "claude");
+  assert.equal(claudeSummary.kind, "attention");
+  assert.equal(claudeSummary.attentionReason, undefined);
+  assert.doesNotMatch(decodeURIComponent(renderStatus(claudeSummary, 5_000)), /data-completion-alert/);
+  assert.equal(store.summarySnapshot(5_000, "codex").attentionReason, "completion");
+  assert.equal(store.snapshot(5_000, "claude").kind, "attention");
+
+  assert.equal(store.dismissCompletionAlerts(), true);
+  assert.equal(store.summarySnapshot(5_000).attentionReason, undefined);
+  assert.equal(store.dismissCompletionAlerts(), false);
+
+  store.applyHook({ hook_event_name: "UserPromptSubmit", session_id: "claude-one" }, 6_000, "claude");
+  store.applyHook({ hook_event_name: "Stop", session_id: "claude-one" }, 7_000, "claude");
+  assert.equal(store.summarySnapshot(8_000, "claude").attentionReason, "completion");
+});
+
 test("treats only a long press on an attention task as completion", () => {
   const store = new StatusStore();
   store.applyHook(
