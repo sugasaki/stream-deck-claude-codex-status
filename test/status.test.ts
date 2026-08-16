@@ -601,15 +601,18 @@ test("flashes the whole key for a new completion and keeps a strong static alert
 
   const bright = decodeURIComponent(renderStatus(snapshot, 0));
   const dim = decodeURIComponent(renderStatus(snapshot, 500));
-  const persistent = decodeURIComponent(renderStatus(snapshot, 30_000));
+  const persistent = decodeURIComponent(renderStatus(snapshot, 60_000));
 
-  assert.match(bright, /fill="#610018" stroke="#FF3355" stroke-width="9"/);
+  assert.match(bright, /fill="#FFD600" stroke="#F0003C" stroke-width="10"/);
   assert.match(bright, /data-completion-alert="true" data-recent="true" data-pulse="true"/);
   assert.match(bright, /data-indicator="completion"/);
+  assert.match(bright, /r="15" fill="#F0003C"/);
+  assert.match(bright, /font-size="26"[^>]*>完了！<\/text>/);
   assert.match(bright, />完了！<\/text>/);
-  assert.match(dim, /fill="#210710" stroke="#FF3355" stroke-width="6"/);
+  assert.doesNotMatch(bright, /data-background-logo/);
+  assert.match(dim, /fill="#F0003C" stroke="#FFD600" stroke-width="10"/);
   assert.match(persistent, /data-completion-alert="true" data-recent="false" data-pulse="false"/);
-  assert.match(persistent, /fill="#210710" stroke="#FF3355" stroke-width="6"/);
+  assert.match(persistent, /fill="#F0003C" stroke="#FFD600" stroke-width="10"/);
 });
 
 test("keeps the actual wait start time in an agent summary", () => {
@@ -622,7 +625,7 @@ test("keeps the actual wait start time in an agent summary", () => {
   assert.equal(summary.attentionReason, "completion");
   assert.match(decodeURIComponent(renderStatus(summary, 6_000)), /data-recent="true"/);
   assert.match(decodeURIComponent(renderStatus(summary, 6_000)), /data-completion-alert="true"/);
-  assert.match(decodeURIComponent(renderStatus(summary, 15_000)), /data-recent="false"/);
+  assert.match(decodeURIComponent(renderStatus(summary, 65_000)), /data-recent="false"/);
 });
 
 test("restores older completion state with the stronger completion alert", () => {
