@@ -19,6 +19,7 @@ export interface RolloutLifecycle {
   kind: "working" | "attention" | "error";
   timestamp: number;
   detail: string;
+  attentionReason?: "completion";
 }
 
 export interface RolloutCursor {
@@ -92,7 +93,12 @@ export function applyCodexRolloutLine(cursor: RolloutCursor, line: string): void
   if (event === "task_started" || event === "user_message") {
     cursor.lifecycle = { kind: "working", timestamp, detail: "応答を作成中" };
   } else if (event === "task_complete") {
-    cursor.lifecycle = { kind: "attention", timestamp, detail: "返信を確認してください" };
+    cursor.lifecycle = {
+      kind: "attention",
+      timestamp,
+      detail: "返信を確認してください",
+      attentionReason: "completion"
+    };
   } else if (event === "turn_aborted") {
     cursor.lifecycle = { kind: "error", timestamp, detail: "応答が中断しました" };
   }
@@ -112,6 +118,7 @@ export function codexSessionFromThread(
     project: path.basename(thread.cwd) || "Codex",
     task: oneLine(thread.display_name, path.basename(thread.cwd) || "Codexタスク"),
     detail: lifecycle.detail,
+    attentionReason: lifecycle.attentionReason,
     startedAt: lifecycle.timestamp,
     updatedAt: lifecycle.timestamp
   };

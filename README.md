@@ -7,7 +7,7 @@ English | [日本語](README.ja.md)
 
 A macOS Stream Deck plugin that displays live Claude Code and Codex task sessions.
 
-After you send an instruction and switch to another task, the plugin tells you when an agent has finished replying or needs permission. It shows `確認待ち` (Needs attention) together with the actual session name, lets you see multiple Claude Code and Codex tasks at a glance, and brings the originating app to the foreground when you press a task key.
+After you send an instruction and switch to another task, the plugin tells you when an agent has finished replying or needs permission. Completed responses get a prominent `完了！` (Complete!) alert, while permission and input requests use `確認待ち` (Needs attention), both with the actual session name. You can see multiple Claude Code and Codex tasks at a glance and bring the originating app to the foreground by pressing its task key.
 
 ![Recommended Stream Deck Neo page 1 layout](assets/readme-preview.svg)
 
@@ -19,10 +19,10 @@ After you send an instruction and switch to another task, the plugin tells you w
 
 ## Features
 
-- Shows `作業中` (Working), `確認待ち` (Needs attention), and `エラー` (Error) for Claude Code and Codex
+- Shows `作業中` (Working), `完了！` (Complete!), `確認待ち` (Needs attention), and `エラー` (Error) for Claude Code and Codex
 - Combines both agents and displays up to 13 real tasks across two pages, sorted by most recent update
 - Uses renameable Claude and Codex chat titles as session names
-- Flashes the red attention marker for ten seconds after a task starts waiting
+- Flashes the entire key between high-visibility red and yellow for 10 seconds after a response completes, then keeps a strong completion display until you check it
 - Animates a large working indicator at five frames per second
 - Brings the app that started a task to the foreground when its key is pressed
 - Removes a task waiting for confirmation when its key is held for at least 0.8 seconds
@@ -116,7 +116,8 @@ The legacy `AI Agent Status` action remains for compatibility but is hidden from
 | Display | Meaning |
 | --- | --- |
 | `作業中` (Working) | The agent is generating a response or running a tool |
-| `確認待ち` (Needs attention) | A response is complete, or the agent needs an answer, choice, or execution permission |
+| `完了！` (Complete!) | The agent finished its response and is waiting for you to check it |
+| `確認待ち` (Needs attention) | The agent needs an answer, choice, or execution permission |
 | `エラー` (Error) | A tool or response failed or was interrupted |
 | `空き` / `表示なし` (Empty) | There is no real task for that key position |
 
@@ -148,7 +149,7 @@ Generic text such as `OK` or `Continue`, local commands, and image notifications
 
 ## What happens when you press a task key
 
-A short press on a task key brings the app most likely to contain that session to the foreground. Holding a `確認待ち` task key for at least 0.8 seconds marks that response complete and removes it from the task list. Long-pressing a working task does not remove it.
+A short press on a task key returns the prominent completion alert to the normal `確認待ち` display, keeps the task in the list, and brings the app most likely to contain that session to the foreground. Holding a `確認待ち` task key for at least 0.8 seconds marks that response complete and removes it from the task list. Long-pressing a working task does not remove it.
 
 - Claude Code: walks up the session PID's parent processes to identify the actual `.app`, such as Ghostty or Terminal
 - Codex: uses the recorded origin application and can open supported apps such as Zed, Visual Studio Code, or Chrome

@@ -21,6 +21,10 @@ const TEXT_COLOR = "#FFFFFF";
 const ATTENTION_COLOR = "#FF3355";
 const ATTENTION_TEXT_COLOR = "#00E5FF";
 const WORKING_TEXT_COLOR = "#69E6A6";
+const COMPLETION_BACKGROUND = "#F0003C";
+const COMPLETION_PULSE_BACKGROUND = "#FFD600";
+const COMPLETION_DARK_TEXT = "#17120A";
+const COMPLETION_PULSE_MS = 10_000;
 
 function escapeXml(value: string): string {
   return value.replace(/[<>&"']/g, (character) => {
@@ -115,6 +119,10 @@ function errorIndicator(x: number, y: number): string {
   return `<path data-indicator="error" d="M${x} ${y - 7}L${x + 7} ${y}L${x} ${y + 7}L${x - 7} ${y}Z" fill="${ATTENTION_COLOR}"/>`;
 }
 
+function completionIndicator(x: number, y: number, fill: string, check: string): string {
+  return `<g data-indicator="completion"><circle cx="${x}" cy="${y}" r="15" fill="${fill}"/><path d="M${x - 6} ${y}l4.5 4.5L${x + 7} ${y - 7}" fill="none" stroke="${check}" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></g>`;
+}
+
 function statusIndicator(snapshot: StatusSnapshot, now: number, color: string, x: number, y: number): string {
   if (snapshot.kind === "working") return workingIndicator(color, now, x, y);
   if (snapshot.kind === "attention") return attentionIndicator(now, snapshot.updatedAt, x, y);
@@ -132,6 +140,14 @@ export function renderStatus(snapshot: StatusSnapshot, now = Date.now()): string
   const isUnifiedSummary = snapshot.sessionId === "summary:all";
   const isEmpty = snapshot.sessionId.startsWith("empty:");
   const hasSession = snapshot.sessionId !== "none" && !snapshot.sessionId.startsWith("empty:");
+  const isCompletion =
+    snapshot.kind === "attention" &&
+    snapshot.attentionReason === "completion" &&
+    !snapshot.completionAlertDismissed;
+  const isRecentCompletion = isCompletion && now >= snapshot.updatedAt && now - snapshot.updatedAt < COMPLETION_PULSE_MS;
+  const completionPulse = isRecentCompletion && Math.floor(now / 500) % 2 === 0;
+  const completionForeground = completionPulse ? COMPLETION_DARK_TEXT : TEXT_COLOR;
+  const completionAccent = completionPulse ? COMPLETION_BACKGROUND : COMPLETION_PULSE_BACKGROUND;
   const showAgent = snapshot.scope !== "all" || hasSession;
   const brand = isUnifiedSummary
     ? "AI AGENTS"
@@ -140,10 +156,10 @@ export function renderStatus(snapshot: StatusSnapshot, now = Date.now()): string
       : "TASK";
   const theme = showAgent && !isUnifiedSummary ? AGENT_THEMES[snapshot.agent] : AGENT_THEMES.neutral;
   const backgroundLogoOpacity = snapshot.agent === "codex" ? 0.72 : 0.7;
-  const backgroundLogo = showAgent && !isUnifiedSummary
+  const backgroundLogo = showAgent && !isUnifiedSummary && !isCompletion
     ? `<g data-background-logo="${snapshot.agent}" opacity="${backgroundLogoOpacity}">${renderAgentIcon(snapshot.agent, theme.border, 64, 66, 76)}</g>`
     : "";
-  const statusLabel = escapeXml(snapshot.label ?? STATUS_LABELS[snapshot.kind]);
+  const statusLabel = escapeXml(isCompletion && !isSummary ? "完了！" : snapshot.label ?? STATUS_LABELS[snapshot.kind]);
   const statusTextColor = snapshot.kind === "attention"
     ? ATTENTION_TEXT_COLOR
     : snapshot.kind === "working"
@@ -154,7 +170,10 @@ export function renderStatus(snapshot: StatusSnapshot, now = Date.now()): string
     ? ""
     : updatedAgo(Math.max(0, now - snapshot.updatedAt));
 
-  const header = showAgent && !isUnifiedSummary && isSummary
+  const header = isCompletion && showAgent && !isUnifiedSummary
+    ? `${renderAgentIcon(snapshot.agent, completionForeground, 10, 7, 16)}
+  <text x="31" y="19" fill="${completionForeground}" font-size="9" font-weight="900" letter-spacing="0.8" font-family="Arial,sans-serif">${brand}</text>`
+    : showAgent && !isUnifiedSummary && isSummary
     ? `${renderAgentIcon(snapshot.agent, theme.border, 10, 6, 21)}
   <text x="39" y="23" fill="${TEXT_COLOR}" font-size="15.5" font-weight="700" letter-spacing="0.8" font-family="Arial,sans-serif">${brand}</text>`
     : showAgent && !isUnifiedSummary
@@ -171,9 +190,24 @@ export function renderStatus(snapshot: StatusSnapshot, now = Date.now()): string
     ? workingIndicator(theme.border, now, 28, 101)
     : `<circle cx="28" cy="101" r="6.5" fill="none" stroke="${theme.border}" stroke-width="2.5" opacity="0.35"/>`;
 
-  const indicator = statusIndicator(snapshot, now, theme.border, 30, 39);
+  const indicator = isCompletion && !isSummary
+    ? completionIndicator(29, 45, completionAccent, completionForeground)
+    : statusIndicator(snapshot, now, theme.border, 30, 39);
   const statusX = indicator ? 84 : 72;
-  const content = isSummary
+  const content = isCompletion && isSummary
+    ? `${header}
+  ${completionIndicator(27, 56, completionAccent, completionForeground)}
+  <text x="89" y="64" text-anchor="middle" fill="${completionForeground}" font-size="24" font-weight="900" font-family="Arial,sans-serif">完了あり</text>
+  <text x="72" y="99" text-anchor="middle" fill="${completionForeground}" font-size="18" font-weight="900" font-family="Arial,sans-serif">${statusLabel}</text>
+  <text x="72" y="126" text-anchor="middle" fill="${completionForeground}" font-size="18" font-weight="900" font-family="Arial,sans-serif">${nameLine1}</text>`
+    : isCompletion
+      ? `${header}
+  ${indicator}
+  <text x="91" y="53" text-anchor="middle" fill="${completionForeground}" font-size="26" font-weight="900" letter-spacing="1" font-family="Arial,sans-serif">完了！</text>
+  <text x="72" y="82" text-anchor="middle" fill="${completionForeground}" font-size="16" font-weight="900" font-family="Arial,sans-serif">${nameLine1}</text>
+  <text x="72" y="104" text-anchor="middle" fill="${completionForeground}" font-size="16" font-weight="900" font-family="Arial,sans-serif">${nameLine2}</text>
+  <text x="72" y="126" text-anchor="middle" fill="${completionForeground}" font-size="16" font-weight="900" font-family="Arial,sans-serif">${nameLine3}</text>`
+    : isSummary
     ? `${header}
   ${summaryAttentionIndicator}
   <text x="82" y="68" text-anchor="middle" fill="${ATTENTION_TEXT_COLOR}" font-size="20" font-weight="700" font-family="Arial,sans-serif">${statusLabel}</text>
@@ -188,9 +222,16 @@ export function renderStatus(snapshot: StatusSnapshot, now = Date.now()): string
   <rect x="24" y="117" width="96" height="22" rx="11" fill="${BACKGROUND_COLOR}" opacity="0.86"/>
   <text x="72" y="134" text-anchor="middle" fill="${TEXT_COLOR}" font-size="14" font-weight="700" font-family="Arial,sans-serif">${escapeXml(time)}</text>`;
 
+  const keyBackground = completionPulse ? COMPLETION_PULSE_BACKGROUND : isCompletion ? COMPLETION_BACKGROUND : BACKGROUND_COLOR;
+  const keyBorder = isCompletion ? completionAccent : theme.border;
+  const keyBorderWidth = isCompletion ? 10 : 3.5;
+  const completionAlert = isCompletion
+    ? `<rect data-completion-alert="true" data-recent="${isRecentCompletion}" data-pulse="${completionPulse}" x="8" y="8" width="128" height="128" rx="14" fill="none" stroke="${completionForeground}" stroke-width="3" opacity="0.9"/>`
+    : "";
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">
-  <rect x="2" y="2" width="140" height="140" rx="20" fill="${BACKGROUND_COLOR}" stroke="${theme.border}" stroke-width="3.5"/>
-  <rect x="6" y="6" width="132" height="132" rx="16" fill="none" stroke="${theme.border}" stroke-width="1" opacity="0.24"/>
+  <rect x="2" y="2" width="140" height="140" rx="20" fill="${keyBackground}" stroke="${keyBorder}" stroke-width="${keyBorderWidth}"/>
+  ${completionAlert}
+  <rect x="6" y="6" width="132" height="132" rx="16" fill="none" stroke="${isCompletion ? completionForeground : theme.border}" stroke-width="${isCompletion ? 2 : 1}" opacity="${isCompletion ? 0.82 : 0.24}"/>
   ${backgroundLogo}
   ${content}
 </svg>`;

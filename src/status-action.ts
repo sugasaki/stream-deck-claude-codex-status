@@ -61,6 +61,10 @@ abstract class BaseStatusAction extends SingletonAction {
       await ev.action.showAlert();
       return;
     }
+    if (this.store.dismissCompletionAlert(snapshot.sessionId)) {
+      this.onChange?.();
+      await this.refresh();
+    }
     if (await this.activator.activate(snapshot)) await ev.action.showOk();
     else await ev.action.showAlert();
   }
