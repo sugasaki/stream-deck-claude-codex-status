@@ -22,7 +22,7 @@ After you send an instruction and switch to another task, the plugin tells you w
 - Shows `作業中` (Working), `完了！` (Complete!), `確認待ち` (Needs attention), and `エラー` (Error) for Claude Code and Codex
 - Combines both agents and displays up to 13 real tasks across two pages, sorted by most recent update
 - Uses renameable Claude and Codex chat titles as session names
-- Flashes the entire key between high-visibility red and yellow for 10 seconds after a response completes, then keeps a strong completion display until you check it
+- Flashes the entire key between high-visibility red and yellow for 10 seconds after a response completes, then keeps a static red completion display until you physically press the corresponding task or summary key
 - Animates a large working indicator at five frames per second
 - Brings the app that started a task to the foreground when its key is pressed
 - Removes a task waiting for confirmation when its key is held for at least 0.8 seconds

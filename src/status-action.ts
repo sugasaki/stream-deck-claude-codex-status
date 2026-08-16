@@ -31,11 +31,13 @@ abstract class BaseStatusAction extends SingletonAction {
   }
 
   override onKeyDown(ev: KeyDownEvent): void {
-    if (this.summary) return;
     this.#presses.begin(ev.action.id, this.#snapshot(Date.now()));
   }
 
   override async onKeyUp(ev: KeyUpEvent): Promise<void> {
+    const result = this.#presses.finish(ev.action.id);
+    if (!result) return;
+
     if (this.summary) {
       if (!this.store.dismissCompletionAlerts(this.agent)) return;
       this.onChange?.();
@@ -43,8 +45,6 @@ abstract class BaseStatusAction extends SingletonAction {
       await ev.action.showOk();
       return;
     }
-    const result = this.#presses.finish(ev.action.id);
-    if (!result) return;
 
     const { snapshot } = result;
     if (snapshot.sessionId === "none" || snapshot.sessionId.startsWith("empty:")) {
