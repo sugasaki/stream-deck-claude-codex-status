@@ -287,6 +287,23 @@ test("summary acknowledgment dismisses completion alerts only in its agent scope
   assert.equal(store.summarySnapshot(8_000, "claude").attentionReason, "completion");
 });
 
+test("requires a matching key-down before a summary can dismiss completion alerts", () => {
+  const store = new StatusStore();
+  store.applyHook({ hook_event_name: "UserPromptSubmit", session_id: "one" }, 1_000, "codex");
+  store.applyHook({ hook_event_name: "Stop", session_id: "one" }, 2_000, "codex");
+  const tracker = new SessionPressTracker();
+
+  assert.equal(tracker.finish("codex-summary", 30_000), undefined);
+  const persistent = store.summarySnapshot(30_000, "codex");
+  assert.equal(persistent.attentionReason, "completion");
+  assert.match(decodeURIComponent(renderStatus(persistent, 30_000)), /data-completion-alert/);
+
+  tracker.begin("codex-summary", persistent, 31_000);
+  assert.equal(tracker.finish("codex-summary", 31_100)?.type, "activate");
+  assert.equal(store.dismissCompletionAlerts("codex"), true);
+  assert.equal(store.summarySnapshot(31_100, "codex").attentionReason, undefined);
+});
+
 test("treats only a long press on an attention task as completion", () => {
   const store = new StatusStore();
   store.applyHook(
